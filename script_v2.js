@@ -1038,9 +1038,9 @@ function startDrag(e) {
     };
     
     canvas.classList.add('dragging');
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', endDrag);
-    
+    document.addEventListener('pointermove', drag, { passive: false });
+    document.addEventListener('pointerup', endDrag, { passive: false });
+    document.addEventListener('pointercancel', endDrag, { passive: false });
     renderScene();
 }
 
@@ -1062,8 +1062,9 @@ function startSceneDrag(sceneItem, mouseX, mouseY) {
     state.permanentItems = state.permanentItems.filter(it => it !== sceneItem);
 
     canvas.classList.add('dragging');
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('pointermove', drag, { passive: false });
+    document.addEventListener('pointerup', endDrag, { passive: false });
+    document.addEventListener('pointercancel', endDrag, { passive: false });
     renderScene();
 }
 
@@ -1694,9 +1695,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.currentScreen !== 'training-screen') return;
         if (state.currentStep !== 9) return;
 
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const pt = getCanvasPointFromEvent(e);
+        const x = pt.x;
+        const y = pt.y;
 
         const center = getHumeralCenter();
         const dist = distance({x, y}, center);
@@ -1710,6 +1711,29 @@ document.addEventListener('DOMContentLoaded', () => {
             state.errors++;
             updateUI();
         }
+
+    // Canvas pointerup (mobile-friendly tap handler for Step 9)
+    if (canvas) canvas.addEventListener('pointerup', (e) => {
+        if (state.currentScreen !== 'training-screen') return;
+        if (state.currentStep !== 9) return;
+
+        e.preventDefault();
+
+        const pt = getCanvasPointFromEvent(e);
+        const center = getHumeralCenter();
+        const dist = distance({ x: pt.x, y: pt.y }, center);
+
+        if (dist <= CONFIG.HIT_TOLERANCE * 2) {
+            state.siteChecked = true;
+            showFeedback('✓ IO site assessed. No signs of infiltration noted.', 'success');
+            setTimeout(() => advanceStep(), 900);
+        } else {
+            showFeedback('Tap the IO insertion site to assess patency', 'error');
+            state.errors++;
+            updateUI();
+        }
+    }, { passive: false });
+
     });
 
     // Canvas mousedown: allow dragging of scene-only items (Step 4 stylet)
@@ -1718,9 +1742,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.currentStep !== 4) return;
         if (state.draggedItem) return;
 
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const pt = getCanvasPointFromEvent(e);
+        const x = pt.x;
+        const y = pt.y;
 
         // Find the step 4 stylet item rendered on the canvas
         const styletItem = state.permanentItems.find(it => it.onlyStep === 4 && it.imageKey === 'stylet');
