@@ -82,6 +82,20 @@ const state = {
     showNeedleTip: false,
 };
 
+const IS_COARSE_POINTER = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+
+// Scale tolerance on phones/tablets to make drops less frustrating
+function tol(px) {
+return IS_COARSE_POINTER ? Math.round(px * 1.8) : px;
+}
+
+
+function getCanvasPointFromEvent(e) {
+const rect = canvas.getBoundingClientRect();
+// Pointer events always provide clientX/clientY
+return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
 // ===== STEP DEFINITIONS =====
 const STEPS = {
     1: {
@@ -965,7 +979,7 @@ function updateToolsPanel() {
         toolDiv.appendChild(name);
         container.appendChild(toolDiv);
         
-        toolDiv.addEventListener('mousedown', startDrag);
+        toolDiv.addEventListener('pointerdown', startDrag, { passive: false });
     });
 }
 
@@ -1029,76 +1043,99 @@ function completeSimulation() {
 }
 
 // ===== DRAG & DROP =====
-function startDrag(e) {
+    function startDrag(e) {
     e.preventDefault();
-    
+
+
     const toolDiv = e.currentTarget;
     const toolKey = toolDiv.dataset.toolKey;
     const tool = TOOLS[toolKey];
-    
     if (!tool) return;
-    
+
+
+    // Capture pointer so drag continues reliably
+    toolDiv.setPointerCapture?.(e.pointerId);
+
+
+    const pt = getCanvasPointFromEvent(e);
     const scaleFactor = 0.3;
+
+
     state.draggedItem = {
-        type: toolKey,
-        imageKey: toolKey,
-        x: e.clientX - canvas.getBoundingClientRect().left,
-        y: e.clientY - canvas.getBoundingClientRect().top,
-        width: tool.size.w * scaleFactor,
-        height: tool.size.h * scaleFactor,
-        rotation: 0
-    };
+    type: toolKey,
+    imageKey: toolKey,
+    x: pt.x,
+    y: pt.y,
+    width: tool.size.w * scaleFactor,
+    height: tool.size.h * scaleFactor,
+    rotation: 0
+};
     
     canvas.classList.add('dragging');
+
     document.addEventListener('pointermove', drag, { passive: false });
     document.addEventListener('pointerup', endDrag, { passive: false });
     document.addEventListener('pointercancel', endDrag, { passive: false });
+
     renderScene();
 }
 
 // Start dragging a scene-only item (e.g., Step 4 stylet) by clicking it on the canvas.
-function startSceneDrag(sceneItem, mouseX, mouseY) {
+    function startSceneDrag(sceneItem, startX, startY, pointerId) {
     if (!sceneItem) return;
+
     state.draggedItem = {
-        type: sceneItem.imageKey,
-        imageKey: sceneItem.imageKey,
-        x: mouseX,
-        y: mouseY,
-        width: sceneItem.width,
-        height: sceneItem.height,
-        rotation: 0,
-        _fromScene: true
-    };
+    type: sceneItem.imageKey,
+    imageKey: sceneItem.imageKey,
+    x: startX,
+    y: startY,
+    width: sceneItem.width,
+    height: sceneItem.height,
+    rotation: 0,
+    _fromScene: true,
+    _pointerId: pointerId
+};
 
     // Hide the scene item while dragging
     state.permanentItems = state.permanentItems.filter(it => it !== sceneItem);
 
     canvas.classList.add('dragging');
+
     document.addEventListener('pointermove', drag, { passive: false });
     document.addEventListener('pointerup', endDrag, { passive: false });
     document.addEventListener('pointercancel', endDrag, { passive: false });
+
     renderScene();
 }
 
-function drag(e) {
+    function drag(e) {
     if (!state.draggedItem) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    state.draggedItem.x = e.clientX - rect.left;
-    state.draggedItem.y = e.clientY - rect.top;
-    
+    e.preventDefault();
+
+    const pt = getCanvasPointFromEvent(e);
+    state.draggedItem.x = pt.x;
+    state.draggedItem.y = pt.y;
+
     renderScene();
 }
 
-function endDrag(e) {
+    function endDrag(e) {
     if (!state.draggedItem) return;
-    
+    e.preventDefault();
+
     canvas.classList.remove('dragging');
+
+    // Remove pointer listeners (these are the ones you actually add)
+    document.removeEventListener('pointermove', drag);
+    document.removeEventListener('pointerup', endDrag);
+    document.removeEventListener('pointercancel', endDrag);
+
+    // Also remove any legacy mouse listeners (safe no-ops)
     document.removeEventListener('mousemove', drag);
     document.removeEventListener('mouseup', endDrag);
-    
+
     validateDrop(state.draggedItem);
-    
+
     state.draggedItem = null;
     renderScene();
 }
@@ -1749,28 +1786,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Canvas mousedown: allow dragging of scene-only items (Step 4 stylet)
-    if (canvas) canvas.addEventListener('mousedown', (e) => {
-        if (state.currentScreen !== 'training-screen') return;
-        if (state.currentStep !== 4) return;
-        if (state.draggedItem) return;
+     if (canvas) canvas.addEventListener('pointerdown', (e) => {
+     e.preventDefault();
+     if (state.currentScreen !== 'training-screen') return;
+     if (state.currentStep !== 4) return;
+     if (state.draggedItem) return;
 
-        const pt = getCanvasPointFromEvent(e);
-        const x = pt.x;
-        const y = pt.y;
+     const pt = getCanvasPointFromEvent(e);
+     const x = pt.x;
+     const y = pt.y;
 
-        // Find the step 4 stylet item rendered on the canvas
-        const styletItem = state.permanentItems.find(it => it.onlyStep === 4 && it.imageKey === 'stylet');
-        if (!styletItem) return;
+     const styletItem = state.permanentItems.find(it => it.onlyStep === 4 && it.imageKey === 'stylet');
+     if (!styletItem) return;
 
-        const left = styletItem.x - styletItem.width / 2;
-        const top = styletItem.y - styletItem.height / 2;
-        const right = styletItem.x + styletItem.width / 2;
-        const bottom = styletItem.y + styletItem.height / 2;
+     const left = styletItem.x - styletItem.width / 2;
+     const top = styletItem.y - styletItem.height / 2;
+     const right = styletItem.x + styletItem.width / 2;
+     const bottom = styletItem.y + styletItem.height / 2;
 
-        if (x >= left && x <= right && y >= top && y <= bottom) {
-            startSceneDrag(styletItem, x, y);
-        }
-    });
+     if (x >= left && x <= right && y >= top && y <= bottom) {
+     canvas.setPointerCapture?.(e.pointerId);
+     startSceneDrag(styletItem, x, y, e.pointerId);
+}
+}, { passive: false });
     
     // Intro screen listener is bound above (startBtn)
     
