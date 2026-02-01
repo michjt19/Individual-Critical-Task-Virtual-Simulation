@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>US Army - EZ-IO Training Simulator</title>
+    <link rel="stylesheet" href="styles_v2_mobile.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Animated Background -->
+        <div class="background-animation">
+            <div class="grid-overlay"></div>
+            <canvas id="particle-canvas"></canvas>
+        </div>
+
+        <!-- Introduction Screen -->
+        <div id="intro-screen" class="screen">
+            <div class="army-header">
+                <div class="army-star">★</div>
+                <h1 class="glitch" data-text="INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION">INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION</h1>
+                <div class="army-star">★</div>
+            </div>
+            
+            <div class="intro-container">
+                <div class="holographic-panel">
+                    <div class="panel-header">
+                        <span class="task-badge">ICT</span>
+                        <h2>Place an Intraosseous Device</h2>
+                        <span class="task-number">081-68W-0237</span>
+                    </div>
+                    
+                    <div class="alert-box caution">
+                        <div class="alert-icon">⚠️</div>
+                        <div class="alert-content">
+                            <strong>CAUTION:</strong> All body fluids should be considered potentially infectious. Always observe body substance isolation (BSI) precautions by wearing gloves and eye protection as a minimal standard of protection.
+                        </div>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <div class="card-header">
+                                <span class="icon">🎯</span>
+                                <h3>CONDITIONS</h3>
+                            </div>
+                            <p>You are in an operational environment with a casualty requiring IO infusion. Equipment provided: IO driver, cartridge, alcohol prep pads, sterile syringe, NS flush, extension set, gauze, biohazard bag, and SF 600.</p>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="card-header">
+                                <span class="icon">📋</span>
+                                <h3>STANDARDS</h3>
+                            </div>
+                            <p>Place an IO device IAW PHTLS Prehospital Trauma Life Support and TCCC Guidelines while adhering to all warnings and cautions, without error.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="objectives-section">
+                        <h3><span class="icon">🎓</span> LEARNING OBJECTIVES</h3>
+                        <div class="objectives-grid">
+                            <div class="objective">✓ Demonstrate proper BSI procedures</div>
+                            <div class="objective">✓ Apply aseptic technique for site preparation</div>
+                            <div class="objective">✓ Position driver at 90-degree angle</div>
+                            <div class="objective">✓ Attach extension set before syringe</div>
+                            <div class="objective">✓ Flush catheter with 5-10mL saline</div>
+                            <div class="objective">✓ Secure catheter with dressing</div>
+                            <div class="objective">✓ Dispose of sharps without recapping</div>
+                            <div class="objective">✓ Document on SF 600</div>
+                        </div>
+                    </div>
+                    
+                    <div class="controls-section">
+                        <h3><span class="icon">🎮</span> SIMULATION CONTROLS</h3>
+                        <div class="controls-grid">
+                            <div class="control-item">
+                                <span class="key">DRAG</span>
+                                <span>Move equipment to patient</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key">Q / E</span>
+                                <span>Rotate EZ-IO driver</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key">D</span>
+                                <span>Toggle debug mode</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scope-note">
+                        <strong>SCOPE:</strong> EZ-IO Humeral Insertion (Performance Measures 1-18). FAST1 sternal placement not included.
+                    </div>
+                    
+                    <button id="start-training-btn" class="military-btn primary">
+                        <span class="btn-bg"></span>
+                        <span class="btn-text">▶ BEGIN TRAINING SIMULATION</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Screen -->
+        <div id="training-screen" class="screen hidden">
+            <!-- Top HUD -->
+            <div class="hud-top">
+                <div class="hud-left">
+                    <div class="army-badge">
+                        <span class="star">★</span>
+                        <span class="text">Individual Critical Task Virtual Simulation</span>
+                        <span class="star">★</span>
+                    </div>
+                    <div class="task-info">
+                        <div class="task-label">TASK</div>
+                        <div class="task-code">081-68W-0237</div>
+                    </div>
+                </div>
+                
+                <div class="hud-center">
+                    <div class="step-indicator">
+                        <span class="step-current" id="current-step-display">1</span>
+                        <span class="step-divider">/</span>
+                        <span class="step-total">10</span>
+                    </div>
+                </div>
+                
+                <div class="hud-right">
+                    <div class="timer" id="timer-display">
+                        <span class="timer-label">TIME</span>
+                        <span class="timer-value">00:00</span>
+                    </div>
+                    <div class="errors" id="errors-display">
+                        <span class="errors-label">ERRORS</span>
+                        <span class="errors-value">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Training Area -->
+            <div class="training-main">
+                <!-- Scene Panel -->
+                <div class="scene-panel">
+                    <div class="panel-frame">
+                        <div class="corner-decoration tl"></div>
+                        <div class="corner-decoration tr"></div>
+                        <div class="corner-decoration bl"></div>
+                        <div class="corner-decoration br"></div>
+                        
+                        <canvas id="scene-canvas"></canvas>
+                        
+                        <div id="feedback-message" class="feedback-overlay hidden"></div>
+                    </div>
+                    
+                    <div class="instruction-display">
+                        <div class="instruction-header">
+                            <span class="pulse-indicator"></span>
+                            <span id="step-title">Step 1: Don BSI Equipment</span>
+                        </div>
+                        <div class="instruction-text" id="step-instruction">
+                            Drag gloves onto the hands and eye protection onto the face
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools Panel -->
+                <div class="tools-panel">
+                    <div class="panel-header">
+                        <span class="icon">🔧</span>
+                        <span>AVAILABLE EQUIPMENT</span>
+                    </div>
+                    <div id="tools-container" class="tools-grid"></div>
+                </div>
+
+                <!-- Progress Panel -->
+                <div class="progress-panel">
+                    <div class="panel-header">
+                        <span class="icon">📊</span>
+                        <span>TASK PROGRESS</span>
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                        <div class="progress-text" id="progress-text">0%</div>
+                    </div>
+                    
+                    <div class="checklist" id="checklist">
+                        <div class="checklist-item" data-step="1">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Don BSI Equipment</span>
+                        </div>
+                        <div class="checklist-item" data-step="2">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Clean Insertion Site</span>
+                        </div>
+                        <div class="checklist-item" data-step="3">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Insert EZ-IO Driver</span>
+                        </div>
+                        <div class="checklist-item" data-step="4">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Remove Driver/Stylet & Sharps</span>
+                        </div>
+                        <div class="checklist-item" data-step="5">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Apply Dressing</span>
+                        </div>
+                        <div class="checklist-item" data-step="6">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Attach Extension Set</span>
+                        </div>
+                        <div class="checklist-item" data-step="7">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Attach Syringe</span>
+                        </div>
+                        <div class="checklist-item" data-step="8">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Flush Catheter</span>
+                        </div>
+                        <div class="checklist-item" data-step="9">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Assess IO Site</span>
+                        </div>
+                        <div class="checklist-item" data-step="10">
+                            <span class="status-icon">⬜</span>
+                            <span class="step-name">Document (SF 600)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debrief Screen -->
+        <div id="debrief-screen" class="screen hidden">
+            <div class="debrief-container">
+                <div class="holographic-panel">
+                    <div class="success-banner">
+                        <div class="success-icon">✓</div>
+                        <h2>SIMULATION COMPLETE</h2>
+                    </div>
+                    
+                    <div class="stats-display">
+                        <div class="stat-card">
+                            <div class="stat-value" id="debrief-steps">10/10</div>
+                            <div class="stat-label">STEPS</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="debrief-errors">0</div>
+                            <div class="stat-label">ERRORS</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="debrief-time">00:00</div>
+                            <div class="stat-label">TIME</div>
+                        </div>
+                    </div>
+                    
+                    <div class="objectives-achieved">
+                        <h3>LEARNING OBJECTIVES ACHIEVED</h3>
+                        <div class="objectives-list">
+                            <div class="objective-achieved">✅ Demonstrated proper BSI procedures</div>
+                            <div class="objective-achieved">✅ Applied aseptic technique for site preparation</div>
+                            <div class="objective-achieved">✅ Positioned EZ-IO driver at 90-degree angle</div>
+                            <div class="objective-achieved">✅ Attached extension set before syringe (safety)</div>
+                            <div class="objective-achieved">✅ Flushed catheter with appropriate saline volume</div>
+                            <div class="objective-achieved">✅ Secured catheter with dressing</div>
+                            <div class="objective-achieved">✅ Disposed of sharps properly without recapping</div>
+                            <div class="objective-achieved">✅ Documented procedure appropriately</div>
+                        </div>
+                    </div>
+                    
+                    <div class="task-summary-box">
+                        <h3>INDIVIDUAL CRITICAL TASK SUMMARY</h3>
+                        <p><strong>Task 081-68W-0237: Place an Intraosseous Device</strong></p>
+                        <p>You have practiced essential steps for establishing intraosseous access using the EZ-IO system at the humeral insertion site. This skill is critical for providing vascular access when traditional IV access is difficult or impossible in tactical and emergency settings.</p>
+                        
+                        <div class="key-points">
+                            <h4>KEY POINTS TO REMEMBER:</h4>
+                            <ul>
+                                <li>Always observe BSI precautions</li>
+                                <li>Use aseptic technique throughout</li>
+                                <li>Position driver perpendicular (90°) to bone</li>
+                                <li>Never attach syringe directly to hub - use extension set</li>
+                                <li>Flush with 5-10mL saline, observe for infiltration</li>
+                                <li>Never recap needles - sharps container only</li>
+                                <li>Document all procedures IAW TCCC guidelines</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <button id="proceed-to-test-btn" class="military-btn primary">
+                        <span class="btn-bg"></span>
+                        <span class="btn-text">▶ PROCEED TO KNOWLEDGE ASSESSMENT</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Screen -->
+        <div id="test-screen" class="screen hidden">
+            <div class="test-container">
+                <div class="holographic-panel">
+                    <div class="test-header">
+                        <h2>KNOWLEDGE ASSESSMENT</h2>
+                        <p class="test-subtitle">10 Questions | 100% Required to Pass</p>
+                    </div>
+                    
+                    <div class="test-progress-bar">
+                        <div class="progress-fill" id="test-progress-fill"></div>
+                        <span class="progress-label">Question <span id="current-question">1</span> of 10</span>
+                    </div>
+                    
+                    <div class="question-card">
+                        <div class="question-number">Q<span id="question-num">1</span></div>
+                        <div class="question-text" id="question-text"></div>
+                        <div class="answer-options" id="answer-options"></div>
+                    </div>
+                    
+                    <div class="test-controls">
+                        <button id="prev-question-btn" class="military-btn secondary" disabled>
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ PREVIOUS</span>
+                        </button>
+                        <button id="next-question-btn" class="military-btn primary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">NEXT ▶</span>
+                        </button>
+                        <button id="submit-test-btn" class="military-btn primary hidden">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">SUBMIT TEST</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Results Screen -->
+        <div id="test-results-screen" class="screen hidden">
+            <div class="results-container">
+                <div class="holographic-panel">
+                    <div id="results-header" class="results-header"></div>
+                    
+                    <div class="score-display-large">
+                        <div class="score-circle">
+                            <div class="score-value" id="test-score"></div>
+                            <div class="score-label">SCORE</div>
+                        </div>
+                        <div id="pass-fail-text" class="pass-fail-indicator"></div>
+                    </div>
+                    
+                    <div id="question-review" class="question-review"></div>
+                    
+                    <div id="remedial-section" class="remedial-notice hidden">
+                        <h3>⚠️ REMEDIAL TRAINING REQUIRED</h3>
+                        <p>You will now review the steps related to your incorrect answers with additional guidance.</p>
+                        <button id="start-remedial-btn" class="military-btn warning">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">BEGIN REMEDIAL TRAINING</span>
+                        </button>
+                    </div>
+                    
+                    <div id="pass-section" class="pass-notice hidden">
+                        <button id="proceed-to-congratulations-btn" class="military-btn primary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">CONTINUE ▶</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remedial Training Screen -->
+        <div id="remedial-screen" class="screen hidden">
+            <div class="remedial-container">
+                <div class="holographic-panel">
+                    <div class="remedial-header">
+                        <h2>REMEDIAL TRAINING</h2>
+                        <p>Review these steps with additional guidance</p>
+                    </div>
+                    
+                    <div id="remedial-steps-container" class="remedial-steps"></div>
+                    
+                    <button id="complete-remedial-btn" class="military-btn primary">
+                        <span class="btn-bg"></span>
+                        <span class="btn-text">COMPLETE REMEDIAL TRAINING & RETEST</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Congratulations Screen -->
+        <div id="congratulations-screen" class="screen hidden">
+            <div class="congratulations-container">
+                <div class="holographic-panel">
+                    <div class="victory-banner">
+                        <div class="army-stars">
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                        </div>
+                        <h2 class="glitch success" data-text="CONGRATULATIONS">CONGRATULATIONS</h2>
+                        <div class="army-stars">
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                            <span class="star">★</span>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-badge">
+                        <div class="badge-icon">🎖️</div>
+                        <h3 class="training-complete-title">TRAINING COMPLETE</h3>
+                    </div>
+                    
+                    <div class="final-summary">
+                        <p>You have successfully completed the <span id="task-name-dynamic">Task</span> training simulation and passed the knowledge assessment with <strong>100%</strong>.</p>
+                        <div class="task-complete-badge">
+                            <strong id="task-number-dynamic">Task 081-68W-0237</strong>
+                            <span class="go-badge">GO</span>
+                        </div>
+                    </div>
+                    
+                    <div class="credit-section">
+                        <h3>RECEIVE OFFICIAL CREDIT</h3>
+                        <p>To receive official credit for completing this Individual Critical Task, proceed to:</p>
+                        <div class="credit-link-container">
+                            <a href="https://perf.myevaluations.com/Procedures/SubmitTask" target="_blank" class="credit-link">
+                                <span class="link-icon">🔗</span>
+                                <span class="link-text">perf.myevaluations.com/Procedures/SubmitTask</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                        </div>
+                        <p class="credit-instruction">Submit using Task Number: <strong class="highlight" id="task-number-highlight">081-68W-0237</strong></p>
+                    </div>
+                    
+                    <button id="restart-from-congratulations-btn" class="military-btn secondary">
+                        <span class="btn-bg"></span>
+                        <span class="btn-text">↻ RESTART TRAINING</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div id="debug-panel" class="debug-panel hidden">
+            <div class="debug-header">DEBUG MODE</div>
+            <label class="debug-option">
+                <input type="checkbox" id="show-hotspots">
+                <span>Show Hotspots</span>
+            </label>
+            <label class="debug-option">
+                <input type="checkbox" id="show-needle-tip">
+                <span>Show Needle Tip</span>
+            </label>
+            <button id="skip-step-btn" class="debug-btn">Skip Step</button>
+        </div>
+    </div>
+
+    <script src="script_v2_mobile.js"></script>
+</body>
+</html>
