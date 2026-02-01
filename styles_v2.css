@@ -1734,3 +1734,55 @@ body {
     box-shadow: none;
   }
 }
+/* ===== MOBILE HUD COMPACT OVERRIDES ===== */
+@media (max-width: 900px) {
+  /* Don’t stack the HUD into a tall column */
+  .hud-top {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  /* Reduce visual weight */
+  .step-indicator {
+    font-size: 24px;
+  }
+
+  .army-badge {
+    padding: 6px 10px;
+  }
+
+  .army-badge .text {
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .timer,
+  .errors {
+    padding: 6px 10px;
+  }
+
+  /* On small widths, hide the TASK block to save vertical space */
+  .task-info {
+    display: none;
+  }
+
+  /* Since HUD is smaller again, keep content snug */
+  .training-main {
+    margin-top: 72px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Even tighter on very small screens */
+  .army-badge .text {
+    display: none; /* keeps stars + frame but removes long text */
+  }
+
+  .step-indicator {
+    font-size: 22px;
+  }
+}
