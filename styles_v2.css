@@ -1698,3 +1698,64 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* ===== MOBILE FRIENDLY LAYER (non-breaking) ===== */
+
+/* Make touch dragging behave (prevents scroll/zoom while interacting) */
+#scene-canvas,
+.tool-item,
+.tools-panel,
+.panel-frame {
+  touch-action: none;
+}
+
+/* Better canvas sizing on small screens (keep aspect ratio, avoid giant fixed height) */
+#scene-canvas {
+  height: auto;              /* overrides the fixed 600px on small screens */
+  aspect-ratio: 4 / 3;       /* matches 800x600 */
+  max-height: 70vh;
+}
+
+/* Make tool tiles easier to tap */
+.tool-item {
+  min-height: 60px;
+}
+
+/* Disable hover “lift” on touch devices (it can feel janky) */
+@media (hover: none) and (pointer: coarse) {
+  .tool-item:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Tighten HUD + layout for phones */
+@media (max-width: 600px) {
+  .screen {
+    padding: 10px;
+  }
+
+  .hud-top {
+    padding: 10px 12px;
+  }
+
+  .army-header h1 {
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  .training-main {
+    padding: 10px;
+    gap: 12px;
+  }
+
+  .tools-panel,
+  .progress-panel {
+    max-height: none; /* avoid tiny scroll boxes on mobile */
+  }
+
+  .military-btn {
+    width: 100%;
+    margin: 8px 0;
+  }
+}
