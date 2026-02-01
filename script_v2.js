@@ -832,8 +832,20 @@ function removePermanentItemsByKey(imageKey) {
 // ===== SCREEN MANAGEMENT =====
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    document.getElementById(screenId).classList.remove('hidden');
+    const el = document.getElementById(screenId);
+    el.classList.remove('hidden');
     state.currentScreen = screenId;
+
+    // Mobile browsers keep scroll position when swapping screens.
+    // Force the view to the top of the newly shown screen.
+    requestAnimationFrame(() => {
+        // Reset both scrolling roots (iOS uses body sometimes)
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+
+        // Ensure the screen itself is at the top of the viewport
+        el.scrollIntoView({ block: "start", behavior: "auto" });
+    });
 }
 
 function startTraining() {
