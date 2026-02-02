@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>US Army - EZ-IO Training Simulator</title>
+    <title>Individual Critical Task Virtual Simulation</title>
     <link rel="stylesheet" href="styles_v2.css">
 </head>
 <body>
@@ -14,8 +14,78 @@
             <canvas id="particle-canvas"></canvas>
         </div>
 
-        <!-- Introduction Screen -->
-        <div id="intro-screen" class="screen">
+        
+<!-- Welcome Screen -->
+<div id="welcome-screen" class="screen">
+    <div class="intro-container">
+        <div class="holographic-panel">
+            <div class="army-header" style="margin-bottom: 20px;">
+                <div class="army-star">★</div>
+                <h1 class="glitch" data-text="INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION">INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION</h1>
+                <div class="army-star">★</div>
+            </div>
+
+            <div class="welcome-copy">
+                <p class="welcome-lead">
+                    Welcome. Select your MOS to access standards-based Individual Critical Task simulations.
+                </p>
+                <p class="welcome-sub">
+                    Additional MOS/AOC libraries will appear as they are released.
+                </p>
+            </div>
+
+            <button id="go-mos-btn" class="military-btn primary" style="margin-top: 18px;">
+                <span class="btn-bg"></span>
+                <span class="btn-text">▶ SELECT MOS</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MOS Selection Screen -->
+<div id="mos-screen" class="screen hidden">
+    <div class="intro-container">
+        <div class="holographic-panel">
+            <div class="panel-header">
+                <span class="icon">🧭</span>
+                <span>SELECT MOS</span>
+            </div>
+
+            <div class="mos-grid" id="mos-grid"></div>
+
+            <div class="nav-row">
+                <button id="mos-back-btn" class="military-btn secondary">
+                    <span class="btn-bg"></span>
+                    <span class="btn-text">◀ BACK</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Selection Screen -->
+<div id="task-screen" class="screen hidden">
+    <div class="intro-container">
+        <div class="holographic-panel">
+            <div class="panel-header">
+                <span class="icon">📚</span>
+                <span id="task-screen-title">TASK CATALOG</span>
+            </div>
+
+            <div class="task-grid" id="task-grid"></div>
+
+            <div class="nav-row">
+                <button id="task-back-btn" class="military-btn secondary">
+                    <span class="btn-bg"></span>
+                    <span class="btn-text">◀ BACK</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Introduction Screen -->
+        <div id="intro-screen" class="screen hidden">
             <div class="army-header">
                 <div class="army-star">★</div>
                 <h1 class="glitch" data-text="INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION">INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION</h1>
@@ -26,8 +96,8 @@
                 <div class="holographic-panel">
                     <div class="panel-header">
                         <span class="task-badge">ICT</span>
-                        <h2>Place an Intraosseous Device</h2>
-                        <span class="task-number">081-68W-0237</span>
+                        <h2 id="task-name-intro">Place an Intraosseous Device</h2>
+                        <span class="task-number" id="task-number-intro">081-68W-0237</span>
                     </div>
                     
                     <div class="alert-box caution">
@@ -111,7 +181,7 @@
                     </div>
                     <div class="task-info">
                         <div class="task-label">TASK</div>
-                        <div class="task-code">081-68W-0237</div>
+                        <div class="task-code" id="task-code-hud">081-68W-0237</div>
                     </div>
                 </div>
                 
