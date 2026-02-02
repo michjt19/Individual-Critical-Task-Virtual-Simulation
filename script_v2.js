@@ -1170,27 +1170,60 @@ function completeSimulation() {
     
     showScreen('debrief-screen');
 }
+// ===== DRAG GUARDS (prevents "instant drop" on some enterprise builds) =====
+const DRAG_START_THRESHOLD_PX = 8; // movement required before we consider it a real drag
 
+const dragGuard = {
+  isDragging: false,
+  startedOnTool: false,
+  hasMoved: false,
+  startClientX: 0,
+  startClientY: 0,
+  lastClientX: 0,
+  lastClientY: 0
+};
+
+function isPointInCanvasFromClient(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+}
+
+function clampCanvasPoint(pt) {
+  return {
+    x: Math.max(0, Math.min(canvas.width, pt.x)),
+    y: Math.max(0, Math.min(canvas.height, pt.y))
+  };
+}
 // ===== DRAG & DROP =====
-    function startDrag(e) {
-    e.preventDefault();
+function startDrag(e) {
+  e.preventDefault();
 
+  const toolDiv = e.currentTarget;
+  const toolKey = toolDiv.dataset.toolKey;
+  const tool = TOOLS[toolKey];
+  if (!tool) return;
 
-    const toolDiv = e.currentTarget;
-    const toolKey = toolDiv.dataset.toolKey;
-    const tool = TOOLS[toolKey];
-    if (!tool) return;
+  // Record drag intent + baseline pointer position
+  dragGuard.isDragging = true;
+  dragGuard.startedOnTool = true;
+  dragGuard.hasMoved = false;
+  dragGuard.startClientX = e.clientX;
+  dragGuard.startClientY = e.clientY;
+  dragGuard.lastClientX = e.clientX;
+  dragGuard.lastClientY = e.clientY;
 
+  // Capture pointer so drag continues reliably
+  toolDiv.setPointerCapture?.(e.pointerId);
 
-    // Capture pointer so drag continues reliably
-    toolDiv.setPointerCapture?.(e.pointerId);
+  // Convert tool-panel click to canvas space (then clamp)
+  // NOTE: on some builds, client coords from the tools panel map oddly vs canvas
+  // if you don’t clamp.
+  const ptRaw = getCanvasPointFromEvent(e);
+  const pt = clampCanvasPoint(ptRaw);
 
+  const scaleFactor = 0.3;
 
-    const pt = getCanvasPointFromEvent(e);
-    const scaleFactor = 0.3;
-
-
-    state.draggedItem = {
+  state.draggedItem = {
     type: toolKey,
     imageKey: toolKey,
     x: pt.x,
@@ -1198,22 +1231,30 @@ function completeSimulation() {
     width: tool.size.w * scaleFactor,
     height: tool.size.h * scaleFactor,
     rotation: 0
-};
-    
-    canvas.classList.add('dragging');
+  };
 
-    document.addEventListener('pointermove', drag, { passive: false });
-    document.addEventListener('pointerup', endDrag, { passive: false });
-    document.addEventListener('pointercancel', endDrag, { passive: false });
+  canvas.classList.add('dragging');
 
-    renderScene();
+  document.addEventListener('pointermove', drag, { passive: false });
+  document.addEventListener('pointerup', endDrag, { passive: false });
+  document.addEventListener('pointercancel', endDrag, { passive: false });
+
+  renderScene();
 }
 
 // Start dragging a scene-only item (e.g., Step 4 stylet) by clicking it on the canvas.
-    function startSceneDrag(sceneItem, startX, startY, pointerId) {
-    if (!sceneItem) return;
+function startSceneDrag(sceneItem, startX, startY, pointerId) {
+  if (!sceneItem) return;
 
-    state.draggedItem = {
+  dragGuard.isDragging = true;
+  dragGuard.startedOnTool = false;
+  dragGuard.hasMoved = false;
+  dragGuard.startClientX = startX; // not used for canvas items, but keep consistent
+  dragGuard.startClientY = startY;
+  dragGuard.lastClientX = startX;
+  dragGuard.lastClientY = startY;
+
+  state.draggedItem = {
     type: sceneItem.imageKey,
     imageKey: sceneItem.imageKey,
     x: startX,
@@ -1223,50 +1264,84 @@ function completeSimulation() {
     rotation: 0,
     _fromScene: true,
     _pointerId: pointerId
-};
+  };
 
-    // Hide the scene item while dragging
-    state.permanentItems = state.permanentItems.filter(it => it !== sceneItem);
+  // Hide the scene item while dragging
+  state.permanentItems = state.permanentItems.filter(it => it !== sceneItem);
 
-    canvas.classList.add('dragging');
+  canvas.classList.add('dragging');
 
-    document.addEventListener('pointermove', drag, { passive: false });
-    document.addEventListener('pointerup', endDrag, { passive: false });
-    document.addEventListener('pointercancel', endDrag, { passive: false });
+  document.addEventListener('pointermove', drag, { passive: false });
+  document.addEventListener('pointerup', endDrag, { passive: false });
+  document.addEventListener('pointercancel', endDrag, { passive: false });
 
-    renderScene();
+  renderScene();
 }
 
-    function drag(e) {
-    if (!state.draggedItem) return;
-    e.preventDefault();
+function drag(e) {
+  if (!state.draggedItem) return;
+  e.preventDefault();
 
-    const pt = getCanvasPointFromEvent(e);
-    state.draggedItem.x = pt.x;
-    state.draggedItem.y = pt.y;
+  dragGuard.lastClientX = e.clientX;
+  dragGuard.lastClientY = e.clientY;
 
-    renderScene();
+  const dx = e.clientX - dragGuard.startClientX;
+  const dy = e.clientY - dragGuard.startClientY;
+  if (!dragGuard.hasMoved && (dx * dx + dy * dy) >= (DRAG_START_THRESHOLD_PX * DRAG_START_THRESHOLD_PX)) {
+    dragGuard.hasMoved = true;
+  }
+
+  const pt = clampCanvasPoint(getCanvasPointFromEvent(e));
+  state.draggedItem.x = pt.x;
+  state.draggedItem.y = pt.y;
+
+  renderScene();
 }
 
-    function endDrag(e) {
-    if (!state.draggedItem) return;
-    e.preventDefault();
+function endDrag(e) {
+  if (!state.draggedItem) return;
+  e.preventDefault();
 
-    canvas.classList.remove('dragging');
+  canvas.classList.remove('dragging');
 
-    // Remove pointer listeners (these are the ones you actually add)
-    document.removeEventListener('pointermove', drag);
-    document.removeEventListener('pointerup', endDrag);
-    document.removeEventListener('pointercancel', endDrag);
+  document.removeEventListener('pointermove', drag);
+  document.removeEventListener('pointerup', endDrag);
+  document.removeEventListener('pointercancel', endDrag);
 
-    // Also remove any legacy mouse listeners (safe no-ops)
-    document.removeEventListener('mousemove', drag);
-    document.removeEventListener('mouseup', endDrag);
+  // Also remove any legacy mouse listeners (safe no-ops)
+  document.removeEventListener('mousemove', drag);
+  document.removeEventListener('mouseup', endDrag);
 
-    validateDrop(state.draggedItem);
+  // HARD GUARDS:
+  // 1) If the pointer never actually moved, treat as "cancel" (prevents instant validation on clicky enterprise builds).
+  // 2) If the pointer-up happened outside the canvas, treat as "cancel" (user didn’t drop on work area).
+  const droppedOverCanvas = isPointInCanvasFromClient(e.clientX, e.clientY);
 
+  if (!dragGuard.hasMoved || !droppedOverCanvas) {
+    // If this was a scene item (Step 4 stylet), put it back so they can try again.
+    if (state.draggedItem._fromScene && state.currentStep === 4 && !state.styletDisposed) {
+      setupStep4SharpsScene();
+    }
+
+    // Clear state without validating
     state.draggedItem = null;
+    dragGuard.isDragging = false;
+    dragGuard.startedOnTool = false;
+    dragGuard.hasMoved = false;
+
     renderScene();
+    return;
+  }
+
+  // Only validate on a real drop over canvas
+  validateDrop(state.draggedItem);
+
+  state.draggedItem = null;
+  dragGuard.isDragging = false;
+  dragGuard.startedOnTool = false;
+  dragGuard.hasMoved = false;
+
+  renderScene();
 }
 
 // Keyboard rotation
