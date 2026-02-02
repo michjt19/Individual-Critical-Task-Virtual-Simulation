@@ -35,14 +35,137 @@ const CONFIG = {
     STEP4_SHARPS_SCALE: 0.34,
 };
 
+
+// ===== PLATFORM DATA (MOS / TASK CATALOG) =====
+// Note: This is a proof-of-concept platform shell. Only 68W is enabled right now.
+const MOS_LIST = [
+  { code: '68A', title: 'Biomedical Equipment Specialist', enabled: false },
+  { code: '68B', title: 'Orthopedic Specialist', enabled: false },
+  { code: '68C', title: 'Practical Nursing Specialist', enabled: false },
+  { code: '68D', title: 'Operating Room Specialist', enabled: false },
+  { code: '68E', title: 'Dental Specialist', enabled: false },
+  { code: '68F', title: 'Physical Therapy Specialist', enabled: false },
+  { code: '68G', title: 'Patient Administration Specialist', enabled: false },
+  { code: '68H', title: 'Optical Laboratory Specialist', enabled: false },
+  { code: '68J', title: 'Medical Logistics Specialist', enabled: false },
+  { code: '68K', title: 'Medical Laboratory Specialist', enabled: false },
+  { code: '68L', title: 'Occupational Therapy Specialist', enabled: false },
+  { code: '68M', title: 'Nutrition Care Specialist', enabled: false },
+  { code: '68N', title: 'Cardiovascular Specialist', enabled: false },
+  { code: '68P', title: 'Radiology Specialist', enabled: false },
+  { code: '68Q', title: 'Pharmacy Specialist', enabled: false },
+  { code: '68R', title: 'Veterinary Food Inspection Specialist', enabled: false },
+  { code: '68S', title: 'Preventive Medicine Specialist', enabled: false },
+  { code: '68T', title: 'Animal Care Specialist', enabled: false },
+  { code: '68U', title: 'Ear, Nose, and Throat (ENT) Specialist', enabled: false },
+  { code: '68V', title: 'Respiratory Specialist', enabled: false },
+  { code: '68W', title: 'Combat Medic Specialist', enabled: true },
+  { code: '68X', title: 'Behavioral Health Specialist', enabled: false },
+  { code: '68Y', title: 'Eye Specialist', enabled: false },
+  { code: '68Z', title: 'Chief Medical NCO', enabled: false },
+];
+
+const TASK_CATALOG = {
+  '68W': [
+    { id: '081-68W-0237', title: 'Place an Intraosseous Device', enabled: true },
+    { id: '081-68W-0230', title: 'Place an Intermediate Airway Device', enabled: false, badge: 'Coming Soon' },
+    { id: '081-68W-0238', title: 'Manage an Intraosseous Infusion', enabled: false, badge: 'Coming Soon' },
+  ]
+};
+
+function setIntroTask(taskId, taskTitle) {
+  const nameEl = document.getElementById('task-name-intro');
+  const numEl = document.getElementById('task-number-intro');
+  if (nameEl) nameEl.textContent = taskTitle;
+  if (numEl) numEl.textContent = taskId;
+
+  // Keep the dynamic text used in later screens aligned too.
+  const taskNameEl = document.getElementById('task-name-dynamic');
+  if (taskNameEl) taskNameEl.textContent = taskTitle;
+  const taskNumEl = document.getElementById('task-number-dynamic');
+  if (taskNumEl) taskNumEl.textContent = `Task ${taskId}`;
+}
+
+function renderMosGrid() {
+  const grid = document.getElementById('mos-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  MOS_LIST.forEach(m => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'mos-card' + (m.enabled ? '' : ' disabled');
+    card.setAttribute('data-mos', m.code);
+    card.innerHTML = `
+      <div class="mos-code">${m.code}</div>
+      <div class="mos-title">${m.title}</div>
+      ${m.enabled ? '' : `<div class="mos-soon">Coming Soon</div>`}
+    `;
+
+    if (m.enabled) {
+      card.addEventListener('click', () => {
+        state.selectedMos = m.code;
+        renderTaskGrid(m.code);
+        const title = document.getElementById('task-screen-title');
+        if (title) title.textContent = `${m.code} TASK CATALOG`;
+        showScreen('task-screen');
+      });
+    } else {
+      card.addEventListener('click', () => {
+        showFeedback(`${m.code} is coming soon.`, 'error');
+      });
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+function renderTaskGrid(mosCode) {
+  const grid = document.getElementById('task-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const tasks = TASK_CATALOG[mosCode] || [];
+  tasks.forEach(t => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'task-card' + (t.enabled ? '' : ' disabled');
+    card.setAttribute('data-task', t.id);
+    card.innerHTML = `
+      <div class="task-card-num">${t.id}</div>
+      <div class="task-card-title">${t.title}</div>
+      ${t.enabled ? '' : `<div class="task-card-badge">${t.badge || 'Coming Soon'}</div>`}
+    `;
+
+    if (t.enabled) {
+      card.addEventListener('click', () => {
+        state.selectedTask = t.id;
+        setIntroTask(t.id, t.title);
+        showScreen('intro-screen');
+      });
+    } else {
+      card.addEventListener('click', () => {
+        showFeedback(`${t.id} is coming soon.`, 'error');
+      });
+    }
+
+    grid.appendChild(card);
+  });
+}
+
 // ===== STATE MANAGEMENT =====
 const state = {
-    currentScreen: 'intro',
+    currentScreen: 'welcome-screen',
     currentStep: 1,
     totalSteps: 10,
     errors: 0,
     startTime: null,
     stepsCompleted: new Set(),
+
+    // Platform navigation
+    selectedMos: null,
+    selectedTask: null,
+
     
     // Item states
     bsiDonned: { gloves: false, eyePro: false },
@@ -1722,6 +1845,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('start-training-btn');
     if (startBtn) startBtn.addEventListener('click', startTraining);
 
+    // Platform navigation (Welcome -> MOS -> Task Catalog -> Task Overview)
+    const goMosBtn = document.getElementById('go-mos-btn');
+    if (goMosBtn) goMosBtn.addEventListener('click', () => {
+        renderMosGrid();
+        showScreen('mos-screen');
+    });
+
+    const mosBackBtn = document.getElementById('mos-back-btn');
+    if (mosBackBtn) mosBackBtn.addEventListener('click', () => showScreen('welcome-screen'));
+
+    const taskBackBtn = document.getElementById('task-back-btn');
+    if (taskBackBtn) taskBackBtn.addEventListener('click', () => showScreen('mos-screen'));
+
+    // Initial render for MOS screen if user lands there (e.g., via reload)
+    renderMosGrid();
+
     // Populate dynamic task text (used on the congratulations screen).
     const taskNameEl = document.getElementById('task-name-dynamic');
     if (taskNameEl) taskNameEl.textContent = TASK_NAME;
@@ -1738,28 +1877,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
         console.error('Initialization error:', err);
     }
-
-    // Canvas click (used for non-drag confirmation steps)
-    if (canvas) canvas.addEventListener('click', (e) => {
-        if (state.currentScreen !== 'training-screen') return;
-        if (state.currentStep !== 9) return;
-
-        const pt = getCanvasPointFromEvent(e);
-        const x = pt.x;
-        const y = pt.y;
-
-        const center = getHumeralCenter();
-        const dist = distance({x, y}, center);
-
-        if (dist <= CONFIG.HIT_TOLERANCE * 2) {
-            state.siteChecked = true;
-            showFeedback('✓ IO site assessed. No signs of infiltration noted.', 'success');
-            setTimeout(() => advanceStep(), 900);
-        } else {
-            showFeedback('Click the IO insertion site to assess patency', 'error');
-            state.errors++;
-            updateUI();
-        }
 
     // Canvas pointerup (mobile-friendly tap handler for Step 9)
     if (canvas) canvas.addEventListener('pointerup', (e) => {
@@ -1782,8 +1899,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUI();
         }
     }, { passive: false });
-
-    });
 
     // Canvas pointerdown: allow dragging of scene-only items (Step 4 stylet)
     if (canvas) canvas.addEventListener('pointerdown', (e) => {
@@ -1854,6 +1969,9 @@ document.addEventListener('DOMContentLoaded', () => {
         advanceStep();
     });
     
+    // Default selected task (proof of concept)
+    setIntroTask('081-68W-0237', 'Place an Intraosseous Device');
+
     // Debug panel toggle
     document.addEventListener('keydown', (e) => {
         if (e.key === 'd' || e.key === 'D') {
