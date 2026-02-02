@@ -1917,9 +1917,58 @@ body {
   overflow-y: auto;
 }
 
+/*
+  Training screen is intentionally "no page scroll" (desktop + mobile), but
+  content must never be clipped. We size the training grid to the viewport and
+  allow INTERNAL scrolling within panels when needed.
+*/
 #training-screen {
   height: 100dvh;
   overflow: hidden;
+}
+
+/* Viewport-fit training area (desktop baseline) */
+#training-screen .training-main {
+  /* HUD is fixed; give the main area the rest of the viewport */
+  height: calc(100dvh - 80px);
+  overflow: hidden;
+  align-items: stretch;
+}
+
+/* Allow the left column to shrink without clipping */
+#training-screen .scene-panel {
+  min-height: 0;
+  height: 100%;
+}
+
+/* Make the frame take remaining height; canvas flexes */
+#training-screen .panel-frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+/* Canvas should fit the available height (not force 600px) */
+#training-screen #scene-canvas {
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: none;
+}
+
+/* Instruction area should never be cut off; scroll internally if needed */
+#training-screen .instruction-display {
+  max-height: 180px;
+  overflow: auto;
+}
+
+/* Right-side panels: use full height and scroll internally */
+#training-screen .tools-panel,
+#training-screen .progress-panel {
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 @media (max-width: 600px) {
@@ -1935,7 +1984,7 @@ body {
     overflow: hidden;
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: 1fr auto auto;
     gap: 10px;
   }
 
@@ -1947,14 +1996,14 @@ body {
 
   /* Keep the work area visible */
   #scene-canvas {
-    max-height: 48vh;
-    height: auto;
-    aspect-ratio: 4 / 3;
+    /* Keep the scene visible while leaving room for instructions + equipment */
+    height: 100%;
+    max-height: none;
   }
 
   /* Step panel: always visible + scroll within */
   .instruction-display {
-    max-height: 20vh;
+    max-height: 22vh;
     overflow: auto;
   }
 
@@ -1970,10 +2019,18 @@ body {
   }
 }
 
-/* Prevent mobile browsers from interpreting drag as scroll/zoom inside the sim */
+/*
+  Touch handling:
+  - Canvas + tool tiles: no native gestures (prevents page scroll while dragging)
+  - Panels containing scrollable content: allow vertical panning
+*/
 #scene-canvas,
-.tool-item,
-.tools-panel,
-.panel-frame {
+.tool-item {
   touch-action: none;
+}
+
+.tools-panel,
+.progress-panel,
+.instruction-display {
+  touch-action: pan-y;
 }
