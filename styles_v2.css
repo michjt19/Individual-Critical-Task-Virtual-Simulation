@@ -1999,3 +1999,76 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ================================================
+   VIEWPORT-FIT TRAINING LAYOUT (DESKTOP + MOBILE)
+   Fixes: instruction panel being clipped when page scroll is disabled.
+   ================================================ */
+
+#training-screen {
+  height: 100dvh;
+  overflow: hidden; /* no page scroll in the sim */
+}
+
+/* Training grid must fit the viewport under the fixed HUD */
+#training-screen .training-main {
+  /* HUD is fixed and ~80px tall; keep a little buffer for borders */
+  height: calc(100dvh - 90px);
+  overflow: hidden;
+}
+
+/* All three columns/panels must be allowed to shrink and scroll internally */
+#training-screen .scene-panel,
+#training-screen .tools-panel,
+#training-screen .progress-panel {
+  height: 100%;
+  min-height: 0; /* critical for overflow children in flex/grid */
+}
+
+/* Scene column: canvas takes remaining height; instructions remain visible */
+#training-screen .scene-panel {
+  min-height: 0;
+}
+
+/* Let the frame expand and the canvas fill it */
+#training-screen .panel-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#training-screen #scene-canvas {
+  flex: 1 1 auto;
+  height: 100% !important;
+  max-height: none !important;
+}
+
+/* Keep instructions visible; if they overflow, scroll within the box */
+#training-screen .instruction-display {
+  flex: 0 0 auto;
+  max-height: 170px;
+  overflow: auto;
+}
+
+/* Tools + progress should use full height and scroll internally (no fixed caps) */
+#training-screen .tools-panel,
+#training-screen .progress-panel {
+  max-height: none;
+  overflow-y: auto;
+}
+
+/* Allow vertical scrolling inside panels on touch devices */
+#training-screen .tools-panel,
+#training-screen .progress-panel,
+#training-screen .instruction-display {
+  touch-action: pan-y;
+}
+
+/* Keep drag surfaces from being interpreted as scroll/zoom */
+#training-screen #scene-canvas,
+#training-screen .tool-item,
+#training-screen .panel-frame {
+  touch-action: none;
+}
