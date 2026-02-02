@@ -850,8 +850,6 @@ function showScreen(screenId) {
     el.classList.remove('hidden');
     state.currentScreen = screenId;
 
-    document.body.classList.toggle('in-training', screenId === 'training-screen');
-
     // Mobile browsers keep scroll position when swapping screens.
     // Force the view to the top of the newly shown screen.
     requestAnimationFrame(() => {
@@ -1719,46 +1717,10 @@ function completeRemedial() {
 
 // ===== EVENT LISTENERS =====
 document.addEventListener('DOMContentLoaded', () => {
-    // ---------- PLATFORM DATA ----------
-    const MOS_LIST = [
-        { code: '68W', enabled: true },
-        { code: '68C', enabled: false },
-        { code: '68D', enabled: false },
-        { code: '68E', enabled: false },
-        { code: '68F', enabled: false },
-        { code: '68J', enabled: false },
-        { code: '68K', enabled: false },
-        { code: '68M', enabled: false },
-        { code: '68P', enabled: false },
-        { code: '68Q', enabled: false },
-        { code: '68R', enabled: false },
-        { code: '68T', enabled: false },
-        { code: '68V', enabled: false },
-        { code: '68X', enabled: false },
-        { code: '68Y', enabled: false }
-    ];
-
-    const TASK_CATALOG = {
-        '68W': [
-            {
-                id: TASK_NUMBER,
-                name: TASK_NAME,
-                enabled: true,
-                badge: 'ICT'
-            }
-        ]
-    };
-
-    state.selectedMos = state.selectedMos || null;
-    state.selectedTaskId = state.selectedTaskId || null;
-
-    // ---------- INITIALIZATION ----------
-    try {
-        initCanvas();
-        loadImages();
-    } catch (err) {
-        console.error('Initialization error:', err);
-    }
+    // Wire the start button first so the intro screen is never "dead" even if
+    // something else fails to initialize.
+    const startBtn = document.getElementById('start-training-btn');
+    if (startBtn) startBtn.addEventListener('click', startTraining);
 
     // Populate dynamic task text (used on the congratulations screen).
     const taskNameEl = document.getElementById('task-name-dynamic');
@@ -1768,146 +1730,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskNumHl = document.getElementById('task-number-highlight');
     if (taskNumHl) taskNumHl.textContent = TASK_NUMBER;
 
-    // Keep HUD + intro aligned to selected task (single-task for now, but future-proof).
-    function applySelectedTaskToUI(task) {
-        const introName = document.getElementById('task-name-intro');
-        if (introName) introName.textContent = task.name;
-
-        const introNum = document.getElementById('task-number-intro');
-        if (introNum) introNum.textContent = task.id;
-
-        const hudCode = document.getElementById('task-code-hud');
-        if (hudCode) hudCode.textContent = task.id;
+    // Initialize canvas + preload images (guarded so a missing element doesn't
+    // kill all event wiring).
+    try {
+        initCanvas();
+        loadImages();
+    } catch (err) {
+        console.error('Initialization error:', err);
     }
 
-    function renderMosGrid() {
-        const grid = document.getElementById('mos-grid');
-        if (!grid) return;
-        grid.innerHTML = '';
+    // Canvas click (used for non-drag confirmation steps)
+    if (canvas) canvas.addEventListener('click', (e) => {
+        if (state.currentScreen !== 'training-screen') return;
+        if (state.currentStep !== 9) return;
 
-        MOS_LIST.forEach(mos => {
-            const card = document.createElement('div');
-            card.className = 'mos-card' + (mos.enabled ? '' : ' disabled');
-            card.innerHTML = `
-                <div class="mos-code">${mos.code}</div>
-                ${mos.enabled ? '' : '<div class="coming-soon"><span>⏳</span><span>Coming Soon</span></div>'}
-            `;
+        const pt = getCanvasPointFromEvent(e);
+        const x = pt.x;
+        const y = pt.y;
 
-            if (mos.enabled) {
-                card.addEventListener('click', () => {
-                    state.selectedMos = mos.code;
-                    renderTaskGrid(mos.code);
-                    showScreen('task-screen');
-                });
-            }
-            grid.appendChild(card);
-        });
-    }
+        const center = getHumeralCenter();
+        const dist = distance({x, y}, center);
 
-    function renderTaskGrid(mosCode) {
-        const grid = document.getElementById('task-grid');
-        if (!grid) return;
-        grid.innerHTML = '';
-
-        const title = document.getElementById('task-screen-title');
-        if (title) title.textContent = `${mosCode} TASK CATALOG`;
-
-        const tasks = TASK_CATALOG[mosCode] || [];
-        tasks.forEach(t => {
-            const card = document.createElement('div');
-            card.className = 'task-card' + (t.enabled ? '' : ' disabled');
-            card.innerHTML = `
-                <div class="mos-code" style="font-size: 16px; letter-spacing: 1px;">${t.badge} • ${t.id}</div>
-                <div style="margin-top: 8px; font-weight: 800; color: var(--text-primary);">${t.name}</div>
-                ${t.enabled ? '' : '<div class="coming-soon"><span>⏳</span><span>Coming Soon</span></div>'}
-            `;
-
-            if (t.enabled) {
-                card.addEventListener('click', () => {
-                    state.selectedTaskId = t.id;
-                    applySelectedTaskToUI(t);
-                    showScreen('intro-screen'); // current "Task Overview" screen
-                });
-            }
-            grid.appendChild(card);
-        });
-    }
-
-    // ---------- NAV BUTTONS ----------
-    const goMosBtn = document.getElementById('go-mos-btn');
-    if (goMosBtn) goMosBtn.addEventListener('click', () => {
-        renderMosGrid();
-        showScreen('mos-screen');
-    });
-
-    const mosBackBtn = document.getElementById('mos-back-btn');
-    if (mosBackBtn) mosBackBtn.addEventListener('click', () => showScreen('welcome-screen'));
-
-    const taskBackBtn = document.getElementById('task-back-btn');
-    if (taskBackBtn) taskBackBtn.addEventListener('click', () => showScreen('mos-screen'));
-
-    // Start training from Task Overview (existing behavior)
-    const startBtn = document.getElementById('start-training-btn');
-    if (startBtn) startBtn.addEventListener('click', startTraining);
-
-    // Debrief -> Test
-    const proceedToTestBtn = document.getElementById('proceed-to-test-btn');
-    if (proceedToTestBtn) proceedToTestBtn.addEventListener('click', initTest);
-
-    // Test screen
-    const prevBtn = document.getElementById('prev-question-btn');
-    if (prevBtn) prevBtn.addEventListener('click', prevQuestion);
-    const nextBtn = document.getElementById('next-question-btn');
-    if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
-    const submitBtn = document.getElementById('submit-test-btn');
-    if (submitBtn) submitBtn.addEventListener('click', submitTest);
-
-    // Test results
-    const remedialBtn = document.getElementById('start-remedial-btn');
-    if (remedialBtn) remedialBtn.addEventListener('click', startRemedialTraining);
-    const proceedCongratsBtn = document.getElementById('proceed-to-congratulations-btn');
-    if (proceedCongratsBtn) proceedCongratsBtn.addEventListener('click', () => showScreen('congratulations-screen'));
-
-    // Remedial
-    const completeRemedialBtn = document.getElementById('complete-remedial-btn');
-    if (completeRemedialBtn) completeRemedialBtn.addEventListener('click', completeRemedial);
-
-    // Congratulations
-    const restartBtn = document.getElementById('restart-from-congratulations-btn');
-    if (restartBtn) restartBtn.addEventListener('click', () => location.reload());
-
-    // Debug toggles
-    const showHotspots = document.getElementById('show-hotspots');
-    if (showHotspots) showHotspots.addEventListener('change', (e) => {
-        state.showHotspots = e.target.checked;
-        renderScene();
-    });
-
-    const showNeedleTip = document.getElementById('show-needle-tip');
-    if (showNeedleTip) showNeedleTip.addEventListener('change', (e) => {
-        state.showNeedleTip = e.target.checked;
-        renderScene();
-    });
-
-    const skipStepBtn = document.getElementById('skip-step-btn');
-    if (skipStepBtn) skipStepBtn.addEventListener('click', () => advanceStep());
-
-    // Debug panel toggle (D)
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'd' || e.key === 'D') {
-            if (!e.ctrlKey && !e.metaKey) {
-                const dbg = document.getElementById('debug-panel');
-                if (dbg) dbg.classList.toggle('hidden');
-            }
+        if (dist <= CONFIG.HIT_TOLERANCE * 2) {
+            state.siteChecked = true;
+            showFeedback('✓ IO site assessed. No signs of infiltration noted.', 'success');
+            setTimeout(() => advanceStep(), 900);
+        } else {
+            showFeedback('Click the IO insertion site to assess patency', 'error');
+            state.errors++;
+            updateUI();
         }
-    });
 
-    // ---------- CANVAS INTERACTIONS ----------
-    // Step 9: tap/click the IO site (single unified handler)
+    // Canvas pointerup (mobile-friendly tap handler for Step 9)
     if (canvas) canvas.addEventListener('pointerup', (e) => {
         if (state.currentScreen !== 'training-screen') return;
         if (state.currentStep !== 9) return;
-        if (state.draggedItem) return;
 
         e.preventDefault();
 
@@ -1926,39 +1783,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, { passive: false });
 
-    // Step 4: allow dragging the stylet directly from the scene (mobile + desktop)
+    });
+
+    // Canvas pointerdown: allow dragging of scene-only items (Step 4 stylet)
     if (canvas) canvas.addEventListener('pointerdown', (e) => {
         if (state.currentScreen !== 'training-screen') return;
         if (state.currentStep !== 4) return;
         if (state.draggedItem) return;
 
+        // Prevent the page from scrolling/zooming when starting a drag on mobile
         e.preventDefault();
+        e.stopPropagation();
 
         const pt = getCanvasPointFromEvent(e);
         const x = pt.x;
         const y = pt.y;
 
-        const styletItem = state.permanentItems.find(it => it.onlyStep === 4 && it.imageKey === 'stylet');
-        if (!styletItem) return;
+        // Find any draggable scene item under the pointer (currently only the stylet)
+        const hitPad = tol(28); // forgiving hit box on phones/tablets
+        const sceneItem = state.permanentItems
+            .filter(it => it.onlyStep === 4 && it.sceneDraggable)
+            .find(it => {
+                const left = it.x - it.width / 2 - hitPad;
+                const top = it.y - it.height / 2 - hitPad;
+                const right = it.x + it.width / 2 + hitPad;
+                const bottom = it.y + it.height / 2 + hitPad;
+                return (x >= left && x <= right && y >= top && y <= bottom);
+            });
 
-        const left = styletItem.x - styletItem.width / 2;
-        const top = styletItem.y - styletItem.height / 2;
-        const right = styletItem.x + styletItem.width / 2;
-        const bottom = styletItem.y + styletItem.height / 2;
+        if (!sceneItem) return;
 
-        if (x >= left && x <= right && y >= top && y <= bottom) {
-            canvas.setPointerCapture?.(e.pointerId);
-            startSceneDrag(styletItem, x, y, e.pointerId);
-        }
+        canvas.setPointerCapture?.(e.pointerId);
+        startSceneDrag(sceneItem, x, y, e.pointerId);
     }, { passive: false });
-
-    // ---------- START STATE ----------
-    // Default to platform Welcome screen
-    showScreen('welcome-screen');
-
-    // Pre-render MOS so the next screen is instant
-    renderMosGrid();
-
-    // Ensure the single available task is the default selection for UI placeholders
-    applySelectedTaskToUI(TASK_CATALOG['68W'][0]);
+    
+    // Intro screen listener is bound above (startBtn)
+    
+    // Debrief screen
+    document.getElementById('proceed-to-test-btn').addEventListener('click', initTest);
+    
+    // Test screen
+    document.getElementById('prev-question-btn').addEventListener('click', prevQuestion);
+    document.getElementById('next-question-btn').addEventListener('click', nextQuestion);
+    document.getElementById('submit-test-btn').addEventListener('click', submitTest);
+    
+    // Test results
+    document.getElementById('start-remedial-btn').addEventListener('click', startRemedialTraining);
+    document.getElementById('proceed-to-congratulations-btn').addEventListener('click', () => showScreen('congratulations-screen'));
+    
+    // Remedial
+    document.getElementById('complete-remedial-btn').addEventListener('click', completeRemedial);
+    
+    // Congratulations
+    document.getElementById('restart-from-congratulations-btn').addEventListener('click', () => {
+        location.reload();
+    });
+    
+    // Debug
+    document.getElementById('show-hotspots').addEventListener('change', (e) => {
+        state.showHotspots = e.target.checked;
+        renderScene();
+    });
+    
+    document.getElementById('show-needle-tip').addEventListener('change', (e) => {
+        state.showNeedleTip = e.target.checked;
+        renderScene();
+    });
+    
+    document.getElementById('skip-step-btn').addEventListener('click', () => {
+        advanceStep();
+    });
+    
+    // Debug panel toggle
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'd' || e.key === 'D') {
+            if (!e.ctrlKey && !e.metaKey) {
+                document.getElementById('debug-panel').classList.toggle('hidden');
+            }
+        }
+    });
 });
