@@ -215,9 +215,15 @@ return IS_COARSE_POINTER ? Math.round(px * 1.8) : px;
 
 
 function getCanvasPointFromEvent(e) {
-const rect = canvas.getBoundingClientRect();
-// Pointer events always provide clientX/clientY
-return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    // Convert viewport coordinates to *canvas coordinate space*.
+    // Must account for CSS scaling (common on mobile/when panels resize).
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+    };
 }
 // ===== STEP DEFINITIONS =====
 const STEPS = {
