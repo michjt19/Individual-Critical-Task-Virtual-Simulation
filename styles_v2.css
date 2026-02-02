@@ -633,6 +633,9 @@ body {
     max-width: 1800px;
     margin-left: auto;
     margin-right: auto;
+    /* No page scrolling during training; panels scroll internally as needed */
+    height: calc(100dvh - 80px);
+    overflow: hidden;
 }
 
 /* ===== SCENE PANEL ===== */
@@ -777,7 +780,8 @@ body {
     border: 2px solid var(--army-gold);
     border-radius: 12px;
     padding: 20px;
-    max-height: 700px;
+    height: 100%;
+    max-height: none;
     overflow-y: auto;
     box-shadow: var(--glow-gold);
 }
@@ -838,7 +842,8 @@ body {
     border: 2px solid var(--army-gold);
     border-radius: 12px;
     padding: 20px;
-    max-height: 700px;
+    height: 100%;
+    max-height: none;
     overflow-y: auto;
     box-shadow: var(--glow-gold);
 }
@@ -1901,7 +1906,19 @@ body {
 /* =================================================
    CHANGE #2: MOBILE TRAINING LAYOUT (NO UP/DOWN SCROLL)
    ================================================= */
-body.in-training {
+/*
+  Training is intentionally "no page scroll", but other screens (welcome/MOS/tasks/overview)
+  must remain scrollable if content exceeds the viewport.
+  Instead of locking the whole body, lock only the training screen.
+*/
+
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#training-screen {
+  height: 100dvh;
   overflow: hidden;
 }
 
