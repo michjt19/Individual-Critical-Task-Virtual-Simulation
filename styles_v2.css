@@ -204,6 +204,7 @@ body {
 .holographic-panel {
     background: var(--bg-panel);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 2px solid var(--army-gold);
     border-radius: 12px;
     padding: 40px;
@@ -518,6 +519,7 @@ body {
     padding: 15px 30px;
     background: linear-gradient(180deg, rgba(10, 14, 20, 0.95) 0%, transparent 100%);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-bottom: 2px solid var(--army-gold);
     z-index: 100;
 }
@@ -774,6 +776,7 @@ body {
 .tools-panel {
     background: var(--bg-panel);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 2px solid var(--army-gold);
     border-radius: 12px;
     padding: 20px;
@@ -835,6 +838,7 @@ body {
 .progress-panel {
     background: var(--bg-panel);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 2px solid var(--army-gold);
     border-radius: 12px;
     padding: 20px;
@@ -1699,7 +1703,6 @@ body {
     }
 }
 
-
 /* ===== MOBILE FRIENDLY LAYER (non-breaking) ===== */
 
 /* Prevent mobile browsers from interpreting drag as scroll/zoom inside the sim */
@@ -1707,368 +1710,285 @@ body {
 .tool-item,
 .tools-panel,
 .panel-frame {
-  touch-action: none;
+    touch-action: none;
 }
 
 /* Keep the canvas usable on small screens (avoid fixed desktop height) */
 @media (max-width: 600px) {
-  #scene-canvas {
-    height: auto;
-    aspect-ratio: 4 / 3; /* 800x600 */
-    max-height: 70vh;
-  }
+    #scene-canvas {
+        height: auto;
+        aspect-ratio: 4 / 3;
+        max-height: 70vh;
+    }
 
-  .tool-item {
-    min-height: 60px;
-  }
+    .tool-item {
+        min-height: 60px;
+    }
 
-  .military-btn {
-    width: 100%;
-  }
+    .military-btn {
+        width: 100%;
+    }
 }
 
 /* Disable hover effects on touch devices */
 @media (hover: none) and (pointer: coarse) {
-  .tool-item:hover {
-    transform: none;
-    box-shadow: none;
-  }
+    .tool-item:hover {
+        transform: none;
+        box-shadow: none;
+    }
 }
+
 /* ===== MOBILE HUD COMPACT OVERRIDES ===== */
 @media (max-width: 900px) {
-  /* Don’t stack the HUD into a tall column */
-  .hud-top {
-    flex-direction: row !important;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 12px;
-  }
+    .hud-top {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+    }
 
-  /* Reduce visual weight */
-  .step-indicator {
-    font-size: 24px;
-  }
+    .step-indicator {
+        font-size: 24px;
+    }
 
-  .army-badge {
-    padding: 6px 10px;
-  }
+    .army-badge {
+        padding: 6px 10px;
+    }
 
-  .army-badge .text {
-    font-size: 12px;
-    letter-spacing: 1px;
-  }
+    .army-badge .text {
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
 
-  .timer,
-  .errors {
-    padding: 6px 10px;
-  }
+    .timer,
+    .errors {
+        padding: 6px 10px;
+    }
 
-  /* On small widths, hide the TASK block to save vertical space */
-  .task-info {
-    display: none;
-  }
+    .task-info {
+        display: none;
+    }
 
-  /* Since HUD is smaller again, keep content snug */
-  .training-main {
-    margin-top: 72px;
-    padding: 12px;
-  }
+    .training-main {
+        margin-top: 72px;
+        padding: 12px;
+    }
 }
 
 @media (max-width: 480px) {
-  /* Even tighter on very small screens */
-  .army-badge .text {
-    display: none; /* keeps stars + frame but removes long text */
-  }
+    .army-badge .text {
+        display: none;
+    }
 
-  .step-indicator {
-    font-size: 22px;
-  }
+    .step-indicator {
+        font-size: 22px;
+    }
 }
 
+/* ===== VIEWPORT + MOBILE LAYOUT FIXES ===== */
 
-/* =========================================================
-   VIEWPORT + MOBILE LAYOUT FIXES (vNext)
-   Goals:
-   - Desktop: never clip step title/instructions or checklist
-   - Mobile: step + equipment visible without page scrolling between them
-   - Allow panel scrolling, but keep drag surfaces non-scrollable
-   ========================================================= */
-
-/* Only lock page scrolling during the TRAINING screen */
 #training-screen {
-  height: 100dvh;
-  overflow: hidden;
-  padding: 0; /* let inner layout manage spacing */
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    padding: 0;
 }
 
-/* Keep other screens scrollable when content is taller than viewport */
 #intro-screen,
 #debrief-screen,
 #test-screen,
 #test-results-screen,
 #remedial-screen,
 #congratulations-screen {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Training main should fit the viewport under the HUD */
 #training-screen .training-main {
-  height: calc(100dvh - 80px);
-  overflow: hidden;
+    height: calc(100vh - 80px);
+    height: calc(100dvh - 80px);
+    overflow: hidden;
 }
 
-/* Let grid children actually shrink and scroll internally */
 #training-screen .scene-panel,
 #training-screen .tools-panel,
 #training-screen .progress-panel {
-  min-height: 0;
+    min-height: 0;
 }
 
-/* Remove fixed max-height caps so panels can use available height */
 #training-screen .tools-panel,
 #training-screen .progress-panel {
-  max-height: none;
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+    max-height: none;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Instruction area can scroll internally if the viewport is short */
 #training-screen .instruction-display {
-  max-height: 26vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+    max-height: 26vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Touch behavior:
-   - Canvas + draggable tiles: no panning (prevents scroll interfering with drag)
-   - Panels: allow vertical scroll
-*/
 #scene-canvas { touch-action: none; }
 .tool-item { touch-action: none; }
 .tools-panel, .progress-panel, .instruction-display { touch-action: pan-y; }
 
-/* ---------- MOBILE LAYOUT ---------- */
-@media (max-width: 600px) {
-  /* Reduce HUD footprint slightly so content fits */
-  .hud-top { padding: 8px 10px; }
-
-  /* Mobile: stack scene/instructions/tools in a compact, no-bounce layout */
-  #training-screen .training-main {
-    grid-template-columns: 1fr !important;
-    gap: 10px;
-    height: calc(100dvh - 72px);
-    padding: 10px;
-  }
-
-  /* Make the canvas reliably visible but not dominate */
-  #scene-canvas {
-    height: auto;
-    aspect-ratio: 4 / 3;           /* 800x600 */
-    max-height: 42vh;              /* keep room for step + tools */
-  }
-
-  /* Instruction: keep it readable but compact */
-  #training-screen .instruction-display {
-    padding: 14px;
-    max-height: 18vh;
-  }
-  #training-screen .instruction-header { font-size: 16px; }
-  #training-screen .instruction-text { font-size: 14px; }
-
-  /* Tools: horizontal carousel so equipment is always visible without scrolling away from step */
-  #training-screen .tools-panel {
-    padding: 14px;
-    overflow: hidden;              /* grid scrolls horizontally instead */
-  }
-
-  #training-screen .tools-grid {
-    flex-direction: row;
-    gap: 10px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 6px;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    touch-action: pan-x;
-  }
-
-  #training-screen .tool-item {
-    min-width: 150px;
-    scroll-snap-align: start;
-    padding: 10px;
-  }
-
-  #training-screen .tool-item img {
-    max-width: 95px;
-    margin-bottom: 8px;
-  }
-
-  /* Progress panel: hide on very small screens to prevent vertical clipping
-     (we can add a Progress button overlay later) */
-  #training-screen .progress-panel {
-    display: none;
-  }
-}
-
-
 /* ===== MOS / TASK CATALOG UI ===== */
-.mos-grid, .task-grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
-  margin-top: 12px;
-}
-.mos-card, .task-card{
-  position: relative;
-  border: 1px solid rgba(255, 215, 0, 0.35);
-  background: rgba(10, 20, 35, 0.55);
-  border-radius: 14px;
-  padding: 14px 14px 16px;
-  text-align: left;
-  cursor: pointer;
-  color: #eaeaea;
-  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
-}
-.mos-card:hover, .task-card:hover{
-  transform: translateY(-2px);
-  border-color: rgba(255, 215, 0, 0.65);
-  box-shadow: 0 10px 22px rgba(0,0,0,0.35);
-}
-.mos-card.disabled, .task-card.disabled{
-  opacity: 0.45;
-  cursor: not-allowed;
-  filter: grayscale(0.4);
-}
-.mos-code{
-  font-family: 'Orbitron', system-ui, sans-serif;
-  font-weight: 800;
-  letter-spacing: 1px;
-  font-size: 22px;
-  color: #ffd700;
-}
-.mos-title{
-  margin-top: 6px;
-  font-size: 14px;
-  color: rgba(255,255,255,0.85);
-}
-.mos-soon{
-  position:absolute;
-  right: 12px;
-  top: 12px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  background: rgba(255, 60, 60, 0.12);
-  border: 1px solid rgba(255, 60, 60, 0.35);
-  color: rgba(255, 160, 160, 0.95);
-}
-.task-card-num{
-  font-family: 'Orbitron', system-ui, sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-  color: rgba(255, 215, 0, 0.85);
-}
-.task-card-title{
-  margin-top: 6px;
-  font-size: 15px;
-  color: rgba(255,255,255,0.9);
-  line-height: 1.25;
-}
-.task-card-badge{
-  position:absolute;
-  right: 12px;
-  top: 12px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  background: rgba(255, 215, 0, 0.10);
-  border: 1px solid rgba(255, 215, 0, 0.30);
-  color: rgba(255, 215, 0, 0.95);
-}
-@media (max-width: 520px){
-  .mos-grid, .task-grid{
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (max-width: 380px){
-  .mos-grid, .task-grid{
-    grid-template-columns: 1fr;
-  }
+.mos-grid, .task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 12px;
 }
 
+.mos-card, .task-card {
+    position: relative;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    background: rgba(10, 20, 35, 0.55);
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    text-align: left;
+    cursor: pointer;
+    color: #eaeaea;
+    transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
 
-/* ================================================
-   VIEWPORT-FIT TRAINING LAYOUT (DESKTOP + MOBILE)
-   Fixes: instruction panel being clipped when page scroll is disabled.
-   ================================================ */
+.mos-card:hover, .task-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 215, 0, 0.65);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.mos-card.disabled, .task-card.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: grayscale(0.4);
+}
+
+.mos-code {
+    font-family: 'Orbitron', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: 1px;
+    font-size: 22px;
+    color: #ffd700;
+}
+
+.mos-title {
+    margin-top: 6px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.mos-soon {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgba(255, 60, 60, 0.12);
+    border: 1px solid rgba(255, 60, 60, 0.35);
+    color: rgba(255, 160, 160, 0.95);
+}
+
+.task-card-num {
+    font-family: 'Orbitron', system-ui, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    color: rgba(255, 215, 0, 0.85);
+}
+
+.task-card-title {
+    margin-top: 6px;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.25;
+}
+
+.task-card-badge {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: rgba(255, 215, 0, 0.10);
+    border: 1px solid rgba(255, 215, 0, 0.30);
+    color: rgba(255, 215, 0, 0.95);
+}
+
+@media (max-width: 520px) {
+    .mos-grid, .task-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 380px) {
+    .mos-grid, .task-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===== VIEWPORT-FIT TRAINING LAYOUT ===== */
 
 #training-screen {
-  height: 100dvh;
-  overflow: hidden; /* no page scroll in the sim */
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
 }
 
-/* Training grid must fit the viewport under the fixed HUD */
 #training-screen .training-main {
-  /* HUD is fixed and ~80px tall; keep a little buffer for borders */
-  height: calc(100dvh - 90px);
-  overflow: hidden;
+    height: calc(100vh - 90px);
+    height: calc(100dvh - 90px);
+    overflow: hidden;
 }
 
-/* All three columns/panels must be allowed to shrink and scroll internally */
 #training-screen .scene-panel,
 #training-screen .tools-panel,
 #training-screen .progress-panel {
-  height: 100%;
-  min-height: 0; /* critical for overflow children in flex/grid */
+    height: 100%;
+    min-height: 0;
 }
 
-/* Scene column: canvas takes remaining height; instructions remain visible */
 #training-screen .scene-panel {
-  min-height: 0;
+    min-height: 0;
 }
 
-/* Let the frame expand and the canvas fill it */
 #training-screen .panel-frame {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 #training-screen #scene-canvas {
-  flex: 1 1 auto;
-  height: 100% !important;
-  max-height: none !important;
+    flex: 1 1 auto;
+    height: 100% !important;
+    max-height: none !important;
 }
 
-/* Keep instructions visible; if they overflow, scroll within the box */
 #training-screen .instruction-display {
-  flex: 0 0 auto;
-  max-height: 170px;
-  overflow: auto;
+    flex: 0 0 auto;
+    max-height: 170px;
+    overflow: auto;
 }
 
-/* Tools + progress should use full height and scroll internally (no fixed caps) */
 #training-screen .tools-panel,
 #training-screen .progress-panel {
-  max-height: none;
-  overflow-y: auto;
+    max-height: none;
+    overflow-y: auto;
 }
 
-/* Allow vertical scrolling inside panels on touch devices */
 #training-screen .tools-panel,
 #training-screen .progress-panel,
 #training-screen .instruction-display {
-  touch-action: pan-y;
+    touch-action: pan-y;
 }
 
-/* Keep drag surfaces from being interpreted as scroll/zoom */
 #training-screen #scene-canvas,
 #training-screen .tool-item,
 #training-screen .panel-frame {
-  touch-action: none;
+    touch-action: none;
 }
