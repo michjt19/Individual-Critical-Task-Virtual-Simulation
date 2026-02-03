@@ -2017,3 +2017,88 @@ body {
     max-height: 55svh;
   }
 }
+/* =====================================================
+   MOBILE WORK AREA + EQUIPMENT LAYOUT FIX
+   Desktop behavior unchanged
+   ===================================================== */
+@media (max-width: 768px) {
+
+  /* ---------- TRAINING SCREEN ---------- */
+
+  /* Let the page scroll normally on mobile */
+  #training-screen {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  .training-main {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: visible !important;
+  }
+
+  /* ---------- WORK AREA / CANVAS ---------- */
+
+  .scene-panel {
+    width: 100%;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .panel-frame {
+    width: 100%;
+    height: auto !important;
+  }
+
+  /* Force a stable, visible canvas size */
+  #scene-canvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 4 / 3;
+    max-height: 55vh;
+    min-height: 240px;
+    display: block;
+  }
+
+  /* Prevent canvas resizing when address bar moves */
+  canvas {
+    touch-action: none;
+  }
+
+  /* ---------- INSTRUCTION PANEL ---------- */
+
+  .instruction-display {
+    margin-top: 8px;
+  }
+
+  /* ---------- AVAILABLE EQUIPMENT ---------- */
+
+  .tools-panel {
+    width: 100%;
+  }
+
+  /* 2-column grid on mobile ONLY */
+  .tools-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .tool-card {
+    min-height: 140px;
+  }
+
+  .tool-card img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* ---------- PROGRESS PANEL ---------- */
+
+  .progress-panel {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+}
