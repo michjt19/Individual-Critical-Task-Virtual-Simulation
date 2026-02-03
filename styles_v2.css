@@ -2098,3 +2098,15 @@ body {
     margin-bottom: 20px;
   }
 }
+
+/* ===== MOBILE SCENE CANVAS HEIGHT GUARANTEE ===== */
+@media (max-width: 768px) {
+  #training-screen .panel-frame {
+    height: clamp(300px, 50svh, 420px);
+  }
+
+  #training-screen #scene-canvas {
+    height: 100% !important;
+    max-height: none !important;
+  }
+}
