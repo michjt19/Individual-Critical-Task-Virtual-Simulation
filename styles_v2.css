@@ -1718,7 +1718,7 @@ body {
     #scene-canvas {
         height: auto;
         aspect-ratio: 4 / 3;
-        max-height: 70vh;
+        max-height: 70svh;
     }
 
     .tool-item {
@@ -1789,8 +1789,12 @@ body {
 /* ===== VIEWPORT + MOBILE LAYOUT FIXES ===== */
 
 #training-screen {
+    /*
+      Mobile browser UI (address bar) makes 100vh/100dvh change while scrolling.
+      Use 100svh (small viewport height) to keep the scene panel stable.
+    */
     height: 100vh;
-    height: 100dvh;
+    height: 100svh;
     overflow: hidden;
     padding: 0;
 }
@@ -1807,7 +1811,7 @@ body {
 
 #training-screen .training-main {
     height: calc(100vh - 80px);
-    height: calc(100dvh - 80px);
+    height: calc(100svh - 80px);
     overflow: hidden;
 }
 
@@ -1826,7 +1830,7 @@ body {
 }
 
 #training-screen .instruction-display {
-    max-height: 26vh;
+    max-height: 26svh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
@@ -1934,14 +1938,15 @@ body {
 /* ===== VIEWPORT-FIT TRAINING LAYOUT ===== */
 
 #training-screen {
+    /* Use 100svh to prevent scroll-induced resizing on mobile browsers */
     height: 100vh;
-    height: 100dvh;
+    height: 100svh;
     overflow: hidden;
 }
 
 #training-screen .training-main {
     height: calc(100vh - 90px);
-    height: calc(100dvh - 90px);
+    height: calc(100svh - 90px);
     overflow: hidden;
 }
 
@@ -2002,13 +2007,13 @@ body {
     height: auto !important;
     aspect-ratio: 4 / 3;
     min-height: 260px;
-    max-height: 60vh;
+    max-height: 60svh;
   }
 }
 
 @media (max-width: 480px) {
   #training-screen #scene-canvas {
     min-height: 220px;
-    max-height: 55vh;
+    max-height: 55svh;
   }
 }
