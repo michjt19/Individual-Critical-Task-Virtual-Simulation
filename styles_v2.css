@@ -2021,57 +2021,53 @@ body {
    MOBILE WORK AREA + EQUIPMENT LAYOUT FIX
    Desktop behavior unchanged
    ===================================================== */
+/* =====================================================
+   MOBILE SCENE + INSTRUCTION LAYOUT FIX
+   ===================================================== */
 @media (max-width: 768px) {
 
-  /* ---------- TRAINING SCREEN ---------- */
-
-  /* Let the page scroll normally on mobile */
-  #training-screen {
-    height: auto !important;
-    min-height: auto !important;
-    overflow: visible !important;
-  }
-
+  /* ----- TRAINING MAIN STACK ----- */
   .training-main {
     display: flex;
     flex-direction: column;
-    gap: 14px;
     overflow: visible !important;
   }
 
-  /* ---------- WORK AREA / CANVAS ---------- */
-
+  /* ----- SCENE PANEL ----- */
   .scene-panel {
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     height: auto !important;
-    overflow: visible !important;
   }
 
   .panel-frame {
-    width: 100%;
+    flex: none;
     height: auto !important;
   }
 
-  /* Force a stable, visible canvas size */
+  /* ----- SCENE CANVAS (PRIMARY VISUAL) ----- */
   #scene-canvas {
     width: 100% !important;
-    height: auto !important;
     aspect-ratio: 4 / 3;
-    max-height: 55vh;
-    min-height: 240px;
+    height: auto !important;
+    min-height: 260px;
+    max-height: 60vh;
     display: block;
   }
 
-  /* Prevent canvas resizing when address bar moves */
-  canvas {
-    touch-action: none;
-  }
-
-  /* ---------- INSTRUCTION PANEL ---------- */
-
+  /* ----- INSTRUCTION DISPLAY (BELOW CANVAS) ----- */
   .instruction-display {
+    position: static !important;
     margin-top: 8px;
+    z-index: auto;
   }
+
+  /* Prevent overlap artifacts */
+  .instruction-display * {
+    position: relative;
+  }
+}
 
   /* ---------- AVAILABLE EQUIPMENT ---------- */
 
