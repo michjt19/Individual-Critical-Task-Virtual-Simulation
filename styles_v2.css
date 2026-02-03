@@ -2029,13 +2029,12 @@ body {
 
   /* Allow scene panel to scroll internally instead of clipping instructions */
   .scene-panel {
-    overflow-y: auto;
-    min-height: 0;
+    overflow: hidden !important;
   }
 
   /* Slightly relax canvas height so instructions fit without resizing window */
   #scene-canvas {
-    height: min(600px, 65vh);
+    height: min(520px, 58vh);
   }
 
 }
