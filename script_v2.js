@@ -1180,8 +1180,27 @@ const dragGuard = {
   startClientX: 0,
   startClientY: 0,
   lastClientX: 0,
-  lastClientY: 0
+  lastClientY: 0,
+
+  // Tool-panel "pending drag" (we don't create a draggedItem until user moves enough)
+  pendingToolKey: null,
+  pendingToolDiv: null,
+  pendingScaleFactor: 0.3,
+
+  // Suppress the synthetic click some browsers fire after a drag
+  suppressNextClick: false
 };
+
+// Capture-phase click suppressor: prevents "click" from firing after a drag on some mouse builds.
+// This is intentionally global so tool buttons and the canvas don't accidentally treat a drag as a click.
+document.addEventListener('click', (e) => {
+  if (dragGuard.suppressNextClick) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragGuard.suppressNextClick = false;
+  }
+}, true);
+
 
 function isPointInCanvasFromClient(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
@@ -1196,7 +1215,11 @@ function clampCanvasPoint(pt) {
 }
 // ===== DRAG & DROP =====
 function startDrag(e) {
+  // NOTE: For mouse users, some enterprise builds will generate an immediate click/drag combo.
+  // We treat pointerdown as "intent" only and only create a dragged item after the user moves
+  // past DRAG_START_THRESHOLD_PX. This prevents instant validation / instant-use behavior.
   e.preventDefault();
+  e.stopPropagation();
 
   const toolDiv = e.currentTarget;
   const toolKey = toolDiv.dataset.toolKey;
@@ -1212,34 +1235,16 @@ function startDrag(e) {
   dragGuard.lastClientX = e.clientX;
   dragGuard.lastClientY = e.clientY;
 
+  // Store pending tool info; we won't instantiate state.draggedItem until the user actually moves.
+  dragGuard.pendingToolKey = toolKey;
+  dragGuard.pendingToolDiv = toolDiv;
+
   // Capture pointer so drag continues reliably
   toolDiv.setPointerCapture?.(e.pointerId);
-
-  // Convert tool-panel click to canvas space (then clamp)
-  // NOTE: on some builds, client coords from the tools panel map oddly vs canvas
-  // if you don’t clamp.
-  const ptRaw = getCanvasPointFromEvent(e);
-  const pt = clampCanvasPoint(ptRaw);
-
-  const scaleFactor = 0.3;
-
-  state.draggedItem = {
-    type: toolKey,
-    imageKey: toolKey,
-    x: pt.x,
-    y: pt.y,
-    width: tool.size.w * scaleFactor,
-    height: tool.size.h * scaleFactor,
-    rotation: 0
-  };
-
-  canvas.classList.add('dragging');
 
   document.addEventListener('pointermove', drag, { passive: false });
   document.addEventListener('pointerup', endDrag, { passive: false });
   document.addEventListener('pointercancel', endDrag, { passive: false });
-
-  renderScene();
 }
 
 // Start dragging a scene-only item (e.g., Step 4 stylet) by clicking it on the canvas.
@@ -1279,17 +1284,45 @@ function startSceneDrag(sceneItem, startX, startY, pointerId) {
 }
 
 function drag(e) {
-  if (!state.draggedItem) return;
   e.preventDefault();
 
+  // Update movement tracking first
   dragGuard.lastClientX = e.clientX;
   dragGuard.lastClientY = e.clientY;
 
   const dx = e.clientX - dragGuard.startClientX;
   const dy = e.clientY - dragGuard.startClientY;
+
+  // Only consider this a real drag after crossing the threshold
   if (!dragGuard.hasMoved && (dx * dx + dy * dy) >= (DRAG_START_THRESHOLD_PX * DRAG_START_THRESHOLD_PX)) {
     dragGuard.hasMoved = true;
+
+    // If this drag started from a tool in the panel, instantiate the dragged item now
+    if (dragGuard.startedOnTool && !state.draggedItem && dragGuard.pendingToolKey) {
+      const toolKey = dragGuard.pendingToolKey;
+      const tool = TOOLS[toolKey];
+      if (tool) {
+        const pt = clampCanvasPoint(getCanvasPointFromEvent(e));
+        const scaleFactor = dragGuard.pendingScaleFactor ?? 0.3;
+
+        state.draggedItem = {
+          type: toolKey,
+          imageKey: toolKey,
+          x: pt.x,
+          y: pt.y,
+          width: tool.size.w * scaleFactor,
+          height: tool.size.h * scaleFactor,
+          rotation: 0
+        };
+
+        canvas.classList.add('dragging');
+      }
+    }
   }
+
+  // If we still don't have an active dragged item, do nothing (intent-only, no-ops until threshold)
+  if (!state.draggedItem) return;
+
 
   const pt = clampCanvasPoint(getCanvasPointFromEvent(e));
   state.draggedItem.x = pt.x;
@@ -1299,8 +1332,10 @@ function drag(e) {
 }
 
 function endDrag(e) {
-  if (!state.draggedItem) return;
+  // End of drag for both "active" drags and "pending" drags that never crossed the threshold
+  if (!dragGuard.isDragging && !state.draggedItem) return;
   e.preventDefault();
+  const wasRealDrag = !!dragGuard.hasMoved;
 
   canvas.classList.remove('dragging');
 
@@ -1319,15 +1354,18 @@ function endDrag(e) {
 
   if (!dragGuard.hasMoved || !droppedOverCanvas) {
     // If this was a scene item (Step 4 stylet), put it back so they can try again.
-    if (state.draggedItem._fromScene && state.currentStep === 4 && !state.styletDisposed) {
+    if (state.draggedItem && state.draggedItem._fromScene && state.currentStep === 4 && !state.styletDisposed) {
       setupStep4SharpsScene();
     }
 
     // Clear state without validating
+    dragGuard.suppressNextClick = wasRealDrag;
     state.draggedItem = null;
     dragGuard.isDragging = false;
     dragGuard.startedOnTool = false;
     dragGuard.hasMoved = false;
+    dragGuard.pendingToolKey = null;
+    dragGuard.pendingToolDiv = null;
 
     renderScene();
     return;
@@ -1336,6 +1374,7 @@ function endDrag(e) {
   // Only validate on a real drop over canvas
   validateDrop(state.draggedItem);
 
+  dragGuard.suppressNextClick = wasRealDrag;
   state.draggedItem = null;
   dragGuard.isDragging = false;
   dragGuard.startedOnTool = false;
