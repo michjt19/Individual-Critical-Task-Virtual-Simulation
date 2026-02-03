@@ -2024,3 +2024,18 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* ===== DESKTOP FIX: ensure instruction display is visible ===== */
+@media (min-width: 901px) {
+
+  /* Allow scene panel to scroll internally instead of clipping instructions */
+  .scene-panel {
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  /* Slightly relax canvas height so instructions fit without resizing window */
+  #scene-canvas {
+    height: min(600px, 65vh);
+  }
+
+}
