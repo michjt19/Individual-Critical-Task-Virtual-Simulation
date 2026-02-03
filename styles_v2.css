@@ -2038,3 +2038,11 @@ body {
   }
 
 }
+/* ===== DESKTOP: keep training width identical across all steps (no layout jitter) ===== */
+@media (min-width: 901px) {
+  /* Reserve scrollbar space so width doesn't change step-to-step */
+  html { scrollbar-gutter: stable; }
+
+  /* Fallback for browsers that ignore scrollbar-gutter */
+  body { overflow-y: scroll; }
+}
