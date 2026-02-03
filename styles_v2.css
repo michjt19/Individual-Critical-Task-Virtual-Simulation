@@ -1718,7 +1718,7 @@ body {
     #scene-canvas {
         height: auto;
         aspect-ratio: 4 / 3;
-        max-height: 70svh;
+        max-height: 70vh;
     }
 
     .tool-item {
@@ -1786,327 +1786,152 @@ body {
     }
 }
 
-/* ===== VIEWPORT + MOBILE LAYOUT FIXES ===== */
+/* =====================================================
+   VIEWPORT + MOBILE LAYOUT (CLEAN, NON-CONFLICTING)
+   - Desktop: viewport-fit fixed panels
+   - Mobile: stacked layout, full scene visible, tools 2-col
+   ===================================================== */
 
-#training-screen {
-    /*
-      Mobile browser UI (address bar) makes 100vh/100dvh change while scrolling.
-      Use 100svh (small viewport height) to keep the scene panel stable.
-    */
+/* ---------- DESKTOP / LARGE SCREENS: keep viewport-fit behavior ---------- */
+@media (min-width: 901px) {
+  #training-screen {
     height: 100vh;
     height: 100svh;
     overflow: hidden;
     padding: 0;
-}
+  }
 
-#intro-screen,
-#debrief-screen,
-#test-screen,
-#test-results-screen,
-#remedial-screen,
-#congratulations-screen {
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-#training-screen .training-main {
+  #training-screen .training-main {
     height: calc(100vh - 80px);
     height: calc(100svh - 80px);
     overflow: hidden;
-}
+  }
 
-#training-screen .scene-panel,
-#training-screen .tools-panel,
-#training-screen .progress-panel {
+  #training-screen .scene-panel,
+  #training-screen .tools-panel,
+  #training-screen .progress-panel {
     min-height: 0;
-}
+    height: 100%;
+  }
 
-#training-screen .tools-panel,
-#training-screen .progress-panel {
+  #training-screen .tools-panel,
+  #training-screen .progress-panel {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     max-height: none;
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-}
+  }
 
-#training-screen .instruction-display {
-    max-height: 26svh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-#scene-canvas { touch-action: none; }
-.tool-item { touch-action: none; }
-.tools-panel, .progress-panel, .instruction-display { touch-action: pan-y; }
-
-/* ===== MOS / TASK CATALOG UI ===== */
-.mos-grid, .task-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
-    margin-top: 12px;
-}
-
-.mos-card, .task-card {
-    position: relative;
-    border: 1px solid rgba(255, 215, 0, 0.35);
-    background: rgba(10, 20, 35, 0.55);
-    border-radius: 14px;
-    padding: 14px 14px 16px;
-    text-align: left;
-    cursor: pointer;
-    color: #eaeaea;
-    transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
-}
-
-.mos-card:hover, .task-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(255, 215, 0, 0.65);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
-}
-
-.mos-card.disabled, .task-card.disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    filter: grayscale(0.4);
-}
-
-.mos-code {
-    font-family: 'Orbitron', system-ui, sans-serif;
-    font-weight: 800;
-    letter-spacing: 1px;
-    font-size: 22px;
-    color: #ffd700;
-}
-
-.mos-title {
-    margin-top: 6px;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.mos-soon {
-    position: absolute;
-    right: 12px;
-    top: 12px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 12px;
-    background: rgba(255, 60, 60, 0.12);
-    border: 1px solid rgba(255, 60, 60, 0.35);
-    color: rgba(255, 160, 160, 0.95);
-}
-
-.task-card-num {
-    font-family: 'Orbitron', system-ui, sans-serif;
-    font-size: 13px;
-    letter-spacing: 0.5px;
-    color: rgba(255, 215, 0, 0.85);
-}
-
-.task-card-title {
-    margin-top: 6px;
-    font-size: 15px;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.25;
-}
-
-.task-card-badge {
-    position: absolute;
-    right: 12px;
-    top: 12px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 12px;
-    background: rgba(255, 215, 0, 0.10);
-    border: 1px solid rgba(255, 215, 0, 0.30);
-    color: rgba(255, 215, 0, 0.95);
-}
-
-@media (max-width: 520px) {
-    .mos-grid, .task-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 380px) {
-    .mos-grid, .task-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ===== VIEWPORT-FIT TRAINING LAYOUT ===== */
-
-#training-screen {
-    /* Use 100svh to prevent scroll-induced resizing on mobile browsers */
-    height: 100vh;
-    height: 100svh;
-    overflow: hidden;
-}
-
-#training-screen .training-main {
-    height: calc(100vh - 90px);
-    height: calc(100svh - 90px);
-    overflow: hidden;
-}
-
-#training-screen .scene-panel,
-#training-screen .tools-panel,
-#training-screen .progress-panel {
-    height: 100%;
-    min-height: 0;
-}
-
-#training-screen .scene-panel {
-    min-height: 0;
-}
-
-#training-screen .panel-frame {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-#training-screen #scene-canvas {
-    flex: 1 1 auto;
-    height: 100% !important;
-    max-height: none !important;
-}
-
-#training-screen .instruction-display {
-    flex: 0 0 auto;
+  /* Keep instruction panel readable without taking over */
+  #training-screen .instruction-display {
     max-height: 170px;
-    overflow: auto;
-}
-
-#training-screen .tools-panel,
-#training-screen .progress-panel {
-    max-height: none;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Desktop canvas stays as you designed */
+  #scene-canvas {
+    height: 600px;
+  }
 }
 
-#training-screen .tools-panel,
-#training-screen .progress-panel,
-#training-screen .instruction-display {
-    touch-action: pan-y;
-}
-
-#training-screen #scene-canvas,
-#training-screen .tool-item,
-#training-screen .panel-frame {
-    touch-action: none;
-}
-
-/* ===== MOBILE CANVAS GUARANTEE (patch) =====
-   Fix: on some phones the viewport-fit flex/height rules can collapse the canvas to 0px.
-   Force a predictable canvas height on stacked (single-column) layouts.
-*/
+/* ---------- MOBILE / TABLET: stacked layout, scene fully visible ---------- */
 @media (max-width: 900px) {
-  #training-screen #scene-canvas {
+  /* Let the page scroll normally on mobile */
+  #training-screen {
     height: auto !important;
-    aspect-ratio: 4 / 3;
-    min-height: 260px;
-    max-height: 60svh;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0;
   }
-}
 
-@media (max-width: 480px) {
-  #training-screen #scene-canvas {
-    min-height: 220px;
-    max-height: 55svh;
-  }
-}
-/* =====================================================
-   MOBILE WORK AREA + EQUIPMENT LAYOUT FIX
-   Desktop behavior unchanged
-   ===================================================== */
-/* =====================================================
-   MOBILE SCENE + INSTRUCTION LAYOUT FIX
-   ===================================================== */
-@media (max-width: 768px) {
-
-  /* ----- TRAINING MAIN STACK ----- */
+  /* training-main already becomes 1 column at <=900 in your CSS.
+     We force a stable stacked flow and ordering. */
   .training-main {
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px;
     overflow: visible !important;
   }
 
-  /* ----- SCENE PANEL ----- */
-  .scene-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    height: auto !important;
-  }
+  /* ORDER: Scene -> Instructions -> Tools -> Progress */
+  .scene-panel { order: 1; }
+  .instruction-display { order: 2; }
+  .tools-panel { order: 3; }
+  .progress-panel { order: 4; }
 
+  /* Scene frame should not collapse */
   .panel-frame {
-    flex: none;
     height: auto !important;
+    min-height: 0 !important;
+    display: block !important;
   }
 
-  /* ----- SCENE CANVAS (PRIMARY VISUAL) ----- */
+  /* Force the canvas to be fully visible like your target image */
   #scene-canvas {
     width: 100% !important;
-    aspect-ratio: 4 / 3;
     height: auto !important;
-    min-height: 260px;
-    max-height: 60vh;
+    aspect-ratio: 4 / 3;
     display: block;
+    border-radius: 8px;
+    min-height: 320px;     /* ensures face + hands are visible */
+    max-height: none;      /* don’t clamp it into a tiny box */
   }
 
-  /* ----- INSTRUCTION DISPLAY (BELOW CANVAS) ----- */
+  /* Instructions must never overlap the scene */
   .instruction-display {
     position: static !important;
     margin-top: 8px;
     z-index: auto;
+    max-height: none !important;
+    overflow: visible !important;
   }
 
-  /* Prevent overlap artifacts */
-  .instruction-display * {
-    position: relative;
-  }
-}
-
-  /* ---------- AVAILABLE EQUIPMENT ---------- */
-
+  /* Tools panel: remove desktop max-height constraint so it doesn't fight layout */
   .tools-panel {
-    width: 100%;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  /* 2-column grid on mobile ONLY */
+  /* 2-column equipment grid on mobile ONLY */
   .tools-grid {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
 
-  .tool-card {
+  /* Your actual item class is .tool-item (not tool-card) */
+  .tool-item {
     min-height: 140px;
   }
 
-  .tool-card img {
+  .tool-item img {
     max-width: 100%;
     height: auto;
   }
 
-  /* ---------- PROGRESS PANEL ---------- */
-
+  /* Progress panel: same deal */
   .progress-panel {
-    width: 100%;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
     margin-bottom: 20px;
   }
 }
 
-/* ===== MOBILE SCENE CANVAS HEIGHT GUARANTEE ===== */
-@media (max-width: 768px) {
-  #training-screen .panel-frame {
-    height: clamp(300px, 50svh, 420px);
-  }
+/* ---------- Touch interaction rules (keep these) ---------- */
+#scene-canvas,
+.tool-item,
+.tools-panel,
+.panel-frame {
+  touch-action: none;
+}
 
-  #training-screen #scene-canvas {
-    height: 100% !important;
-    max-height: none !important;
+/* Disable hover-only effects on touch */
+@media (hover: none) and (pointer: coarse) {
+  .tool-item:hover {
+    transform: none;
+    box-shadow: none;
   }
 }
+
