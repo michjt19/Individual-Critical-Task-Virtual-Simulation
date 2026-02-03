@@ -2102,7 +2102,7 @@ body {
 /* ===== MOBILE SCENE CANVAS HEIGHT GUARANTEE ===== */
 @media (max-width: 768px) {
   #training-screen .panel-frame {
-    height: clamp(360px, 62svh, 540px);
+    height: clamp(300px, 50svh, 420px);
   }
 
   #training-screen #scene-canvas {
