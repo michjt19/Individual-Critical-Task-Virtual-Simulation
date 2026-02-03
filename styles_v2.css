@@ -1992,3 +1992,23 @@ body {
 #training-screen .panel-frame {
     touch-action: none;
 }
+
+/* ===== MOBILE CANVAS GUARANTEE (patch) =====
+   Fix: on some phones the viewport-fit flex/height rules can collapse the canvas to 0px.
+   Force a predictable canvas height on stacked (single-column) layouts.
+*/
+@media (max-width: 900px) {
+  #training-screen #scene-canvas {
+    height: auto !important;
+    aspect-ratio: 4 / 3;
+    min-height: 260px;
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 480px) {
+  #training-screen #scene-canvas {
+    min-height: 220px;
+    max-height: 55vh;
+  }
+}
