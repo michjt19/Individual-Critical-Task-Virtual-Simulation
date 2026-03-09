@@ -3,10 +3,9 @@
 // Task 081-68W-0237
 // ============================================
 
-// ===== TASK METADATA (display-only) =====
-// Keep these in sync with the task you are simulating.
-const TASK_NAME = "Place an Intraosseous Device";
-const TASK_NUMBER = "081-68W-0237";
+// ===== TASK METADATA (set dynamically by loadTaskData) =====
+let TASK_NAME   = '';
+let TASK_NUMBER = '';
 
 // ===== CONFIGURATION =====
 const CONFIG = {
@@ -33,6 +32,19 @@ const CONFIG = {
     // Step 4 (stylet disposal) scaling + placement
     STEP4_STYLET_SCALE: 0.34,
     STEP4_SHARPS_SCALE: 0.34,
+
+    // 68Q — pharmacy vault hotspot positions (normalized 0–1)
+    NCOIC_CENTER:         { x: 0.80, y: 0.40 },
+    CHIEF_CENTER:         { x: 0.20, y: 0.40 },
+    IRREGULARITY_ZONES: [
+        { x: 0.20, y: 0.65, label: 'Overage' },
+        { x: 0.35, y: 0.65, label: 'Shortage' },
+        { x: 0.50, y: 0.65, label: 'Receipts' },
+        { x: 0.65, y: 0.65, label: 'Pres. Errors' },
+        { x: 0.80, y: 0.65, label: 'Calculations' },
+    ],
+    VAULT_FORM_TARGET:    { x: 0.50, y: 0.35 },
+    COUNTING_TRAY_TARGET: { x: 0.50, y: 0.60 },
 };
 
 
@@ -53,7 +65,7 @@ const MOS_LIST = [
   { code: '68M', title: 'Nutrition Care Specialist', enabled: false },
   { code: '68N', title: 'Cardiovascular Specialist', enabled: false },
   { code: '68P', title: 'Radiology Specialist', enabled: false },
-  { code: '68Q', title: 'Pharmacy Specialist', enabled: false },
+  { code: '68Q', title: 'Pharmacy Specialist', enabled: true },
   { code: '68R', title: 'Veterinary Food Inspection Specialist', enabled: false },
   { code: '68S', title: 'Preventive Medicine Specialist', enabled: false },
   { code: '68T', title: 'Animal Care Specialist', enabled: false },
@@ -70,6 +82,9 @@ const TASK_CATALOG = {
     { id: '081-68W-0237', title: 'Place an Intraosseous Device', enabled: true },
     { id: '081-68W-0230', title: 'Place an Intermediate Airway Device', enabled: false, badge: 'Coming Soon' },
     { id: '081-68W-0238', title: 'Manage an Intraosseous Infusion', enabled: false, badge: 'Coming Soon' },
+  ],
+  '68Q': [
+    { id: '081-68Q-0034', title: 'Inventory Controlled Substances', enabled: true },
   ]
 };
 
@@ -84,6 +99,33 @@ function setIntroTask(taskId, taskTitle) {
   if (taskNameEl) taskNameEl.textContent = taskTitle;
   const taskNumEl = document.getElementById('task-number-dynamic');
   if (taskNumEl) taskNumEl.textContent = `Task ${taskId}`;
+  const taskNumHl = document.getElementById('task-number-highlight');
+  if (taskNumHl) taskNumHl.textContent = taskId;
+
+  // Update conditions and standards from registry
+  const t = TASK_REGISTRY[taskId];
+  if (t) {
+    const condEl = document.getElementById('task-conditions-text');
+    if (condEl) condEl.textContent = t.conditions;
+    const stdEl  = document.getElementById('task-standards-text');
+    if (stdEl)  stdEl.textContent  = t.standards;
+
+    // caution visibility
+    const cautionEl = document.getElementById('intro-caution-box');
+    if (cautionEl) cautionEl.style.display = t.showCaution ? '' : 'none';
+
+    // learning objectives
+    const objGrid = document.getElementById('objectives-grid');
+    if (objGrid && t.objectives) {
+      objGrid.innerHTML = t.objectives
+        .map(o => `<div class="objective">✓ ${o}</div>`)
+        .join('');
+    }
+
+    // scope note
+    const scopeEl = document.getElementById('scope-note-text');
+    if (scopeEl) scopeEl.textContent = t.scope;
+  }
 }
 
 function renderMosGrid() {
@@ -161,10 +203,17 @@ const state = {
     errors: 0,
     startTime: null,
     stepsCompleted: new Set(),
+    stepsWithErrors: new Set(),
+
+    trainingMode: 'instructional',   // 'instructional' | 'evaluation'
+    evaluationToolOrder: [],
 
     // Platform navigation
     selectedMos: null,
     selectedTask: null,
+
+    // Active task validators (set by loadTaskData)
+    activeValidators: {},
 
     
     // Item states
@@ -202,7 +251,8 @@ const state = {
     // Debug
     debugMode: false,
     showHotspots: false,
-    showNeedleTip: false,
+    // Feedback timer (2D)
+    feedbackTimer: null,
 };
 
 const IS_COARSE_POINTER = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
@@ -226,7 +276,7 @@ function getCanvasPointFromEvent(e) {
     };
 }
 // ===== STEP DEFINITIONS =====
-const STEPS = {
+const STEPS_68W_0237 = {
     1: {
         title: "Step 1: Don BSI Equipment",
         instruction: "Drag gloves onto the hands and eye protection onto the face. BSI is required before patient contact.",
@@ -420,7 +470,7 @@ const STEPS = {
 };
 
 // ===== TOOL DEFINITIONS =====
-const TOOLS = {
+const TOOLS_68W_0237 = {
     gloves: { name: "Sterile Gloves", image: "gloves.png", size: { w: 275, h: 183 } },
     eye_pro: { name: "Eye Protection", image: "eye_pro.png", size: { w: 500, h: 500 } },
     alcohol_pad: { name: "Alcohol Prep Pad", image: "alcohol_pad.png", size: { w: 225, h: 225 } },
@@ -434,7 +484,7 @@ const TOOLS = {
 };
 
 // ===== QUESTION BANK (20 questions, 10 randomized for test) =====
-const QUESTION_BANK = [
+const QUESTION_BANK_68W_0237 = [
     {
         question: "What is the minimum Body Substance Isolation (BSI) equipment required before performing an IO insertion?",
         options: [
@@ -677,6 +727,767 @@ const QUESTION_BANK = [
     }
 ];
 
+// ===== 68Q — STEP DEFINITIONS =====
+const STEPS_68Q_0034 = {
+    1: {
+        title: "Step 1: Maintain Separate Records",
+        instruction: "Drag a DA Form 3862 to each controlled substance binder on the shelf. A separate record must be maintained for each substance and dosage form.",
+        scene: "pharmacy-vault",
+        requiredTools: ["da_form_3862"],
+        validate: () => state.da3862RecordsMaintained,
+        remedialGuidance: {
+            title: "Separate DA Form 3862 Per Substance",
+            description: "Each controlled substance, including each dosage form and strength, must have its own DA Form 3862 Controlled Substances Stock Record.",
+            hints: [
+                "A separate form is required for EACH substance AND each dosage form",
+                "Example: morphine 10mg tablets and morphine 10mg/mL injection require separate forms",
+                "This is required by AR 40-3 for complete accountability",
+                "Combining substances on one form is a serious regulatory violation",
+                "Reference: AR 40-3 and TC 8-260"
+            ]
+        }
+    },
+    2: {
+        title: "Step 2: Post Receipts",
+        instruction: "Drag the supply receipt to the DA Form 3862 to post all receipts and turn-ins.",
+        scene: "pharmacy-vault",
+        requiredTools: ["supply_receipt"],
+        validate: () => state.receiptsPosted,
+        remedialGuidance: {
+            title: "Posting Receipts to DA Form 3862",
+            description: "All supply receipts and turn-ins that add controlled substances to stock must be posted as additions to the running balance.",
+            hints: [
+                "Post supply receipts (new stock) as additions to the balance",
+                "Post turn-ins (returned medications) also as receipts",
+                "All receipts must be posted before conducting the physical count",
+                "Unposted receipts cause false shortage irregularities",
+                "Reference: TC 8-260, DA Form 3862 instructions"
+            ]
+        }
+    },
+    3: {
+        title: "Step 3: Post Expenditures",
+        instruction: "Drag the expenditure record to the DA Form 3862 to post all expenditures.",
+        scene: "pharmacy-vault",
+        requiredTools: ["expenditure_record"],
+        validate: () => state.expendituresPosted,
+        remedialGuidance: {
+            title: "Posting Expenditures to DA Form 3862",
+            description: "All dispensed medications and other expenditures must be posted as subtractions from the running balance before conducting the physical count.",
+            hints: [
+                "Expenditures are medications dispensed on prescriptions",
+                "Post expenditures as subtractions from the on-hand balance",
+                "Include waste and destroyed quantities as expenditures",
+                "All expenditures must be posted before counting to ensure accuracy",
+                "Reference: AR 40-3, TC 8-260"
+            ]
+        }
+    },
+    4: {
+        title: "Step 4: Count Controlled Substances",
+        instruction: "Drag each controlled substance bottle/vial to the counting tray, then click the tray to confirm the count matches the DA Form 3862.",
+        scene: "counting-area",
+        requiredTools: ["medication_bottle"],
+        validate: () => state.substancesCounted,
+        remedialGuidance: {
+            title: "Physical Inventory Count Procedure",
+            description: "Each controlled substance must be physically counted and verified against the balance recorded on DA Form 3862.",
+            hints: [
+                "Count each controlled substance individually — do not estimate",
+                "Compare the physical count to the DA Form 3862 running balance",
+                "Any discrepancy between count and record is an irregularity",
+                "Count must be conducted every normal administrative duty day",
+                "Have a witness verify the count when possible",
+                "Reference: AR 40-3"
+            ]
+        }
+    },
+    5: {
+        title: "Step 5: Complete DA Form 3862",
+        instruction: "Sign, date, and record the amount inventoried. Drag the pen to the signature block on the form.",
+        scene: "pharmacy-vault",
+        requiredTools: ["pen"],
+        validate: () => state.da3862Completed,
+        remedialGuidance: {
+            title: "Completing and Signing DA Form 3862",
+            description: "After the inventory count, the DA Form 3862 must be completed with the amount inventoried, signed, and dated by the person conducting the inventory.",
+            hints: [
+                "Record the exact amount counted in the 'Amount Inventoried' block",
+                "Sign with black ink — pencil is not authorized",
+                "Date the form with the actual date of inventory",
+                "The person who conducted the count must sign the form",
+                "Unsigned forms are a regulatory violation",
+                "Reference: TC 8-260"
+            ]
+        }
+    },
+    6: {
+        title: "Step 6: Notify NCOIC/OIC",
+        instruction: "Click the NCOIC/OIC to report any irregularities discovered during the inventory.",
+        scene: "pharmacy-vault",
+        requiredTools: [],
+        validate: () => state.ncoicNotified,
+        remedialGuidance: {
+            title: "Notifying the NCOIC/OIC of Irregularities",
+            description: "Any irregularity discovered during the inventory must be reported to the NCOIC/OIC immediately — BEFORE making any adjustment to the DA Form 3862.",
+            hints: [
+                "Report ALL irregularities — never attempt to self-correct without authorization",
+                "NCOIC/OIC must be notified BEFORE any adjustment is made",
+                "Document the nature of the irregularity when reporting",
+                "Failure to report is a serious regulatory and legal violation",
+                "Reference: AR 40-3"
+            ]
+        }
+    },
+    7: {
+        title: "Step 7: Determine Irregularity Reason",
+        instruction: "Click each possible irregularity type to investigate and determine the reason before making any adjustment.",
+        scene: "pharmacy-vault",
+        requiredTools: [],
+        validate: () => state.irregularityDetermined,
+        remedialGuidance: {
+            title: "Determining the Cause of Irregularities",
+            description: "The reason for an irregularity must be determined before any correction is authorized. Possible causes include overages, shortages, receipt errors, prescription errors, and calculation errors.",
+            hints: [
+                "Overage: more on hand than recorded",
+                "Shortage: less on hand than recorded",
+                "Receipt errors: supply receipts posted incorrectly",
+                "Prescription errors: dispensing errors not captured in expenditures",
+                "Calculation errors: math mistakes in running balance",
+                "Reference: TC 8-260"
+            ]
+        }
+    },
+    8: {
+        title: "Step 8: Correct Irregularities",
+        instruction: "Drag the pen to the erroneous entry to draw a single correction line and initial the correction.",
+        scene: "pharmacy-vault",
+        requiredTools: ["pen"],
+        validate: () => state.irregularitiesCorrected,
+        remedialGuidance: {
+            title: "Correcting Irregularities on DA Form 3862",
+            description: "Authorized corrections must be made using a single line through the error, with the correct entry written alongside and initialed in black ink.",
+            hints: [
+                "Draw ONE line through the error — do not obscure the original entry",
+                "Write the correct information next to or above the error",
+                "Initial the correction in black ink",
+                "White-out and erasure are strictly PROHIBITED",
+                "Electronic systems require a Memorandum for Record (MFR) signed by OIC/Chief",
+                "Reference: AR 40-3, TC 8-260"
+            ]
+        }
+    },
+    9: {
+        title: "Step 9: Notify Chief of Pharmacy",
+        instruction: "Click the Chief of Pharmacy to report inventory results and any corrections made.",
+        scene: "pharmacy-vault",
+        requiredTools: [],
+        validate: () => state.chiefNotified,
+        remedialGuidance: {
+            title: "Notifying the Chief of Pharmacy",
+            description: "After completing all corrections and the inventory process, the Chief of Pharmacy must be notified of the inventory results and any irregularities and corrections.",
+            hints: [
+                "Notify the Chief of Pharmacy of inventory completion",
+                "Report all irregularities found and corrections made",
+                "The Chief of Pharmacy has command responsibility for CS accountability",
+                "This notification is required by AR 40-3 regardless of whether irregularities were found",
+                "Reference: AR 40-3"
+            ]
+        }
+    }
+};
+
+// ===== 68Q — TOOL DEFINITIONS =====
+const TOOLS_68Q_0034 = {
+    da_form_3862:       { name: 'DA Form 3862',       image: 'da_form_3862.png',       size: { w: 400, h: 520 } },
+    supply_receipt:     { name: 'Supply Receipt',     image: 'supply_receipt.png',     size: { w: 300, h: 200 } },
+    expenditure_record: { name: 'Expenditure Record', image: 'expenditure_record.png', size: { w: 300, h: 200 } },
+    medication_bottle:  { name: 'Controlled Substance', image: 'medication_bottle.png', size: { w: 200, h: 300 } },
+    pen:                { name: 'Pen (Black Ink)',    image: 'pen.png',                size: { w: 250, h: 60  } },
+};
+
+// ===== 68Q — QUESTION BANK (20 questions, 10 randomized per test) =====
+const QUESTION_BANK_68Q_0034 = [
+    {
+        question: "What is the primary purpose of DA Form 3862?",
+        options: [
+            "To requisition controlled substances",
+            "To track controlled substance inventory receipts, expenditures, and balances",
+            "To document patient prescriptions",
+            "To report drug diversion to CID"
+        ],
+        correct: 1,
+        relatedStep: 1,
+        explanation: "DA Form 3862 is the Controlled Substances Stock Record used to document all receipts, expenditures, and running balances for each controlled substance."
+    },
+    {
+        question: "How often must a physical inventory of controlled substances be conducted IAW AR 40-3?",
+        options: [
+            "Weekly",
+            "Monthly",
+            "Every normal administrative duty day",
+            "Quarterly"
+        ],
+        correct: 2,
+        relatedStep: 4,
+        explanation: "AR 40-3 requires a physical inventory of all controlled substances every normal administrative duty day."
+    },
+    {
+        question: "Must a separate DA Form 3862 be maintained for each dosage form and strength of a controlled substance?",
+        options: [
+            "No, one form per drug name is sufficient",
+            "Yes, a separate record for each controlled substance and dosage form is required",
+            "Only for Schedule II substances",
+            "Only when total stock exceeds 100 units"
+        ],
+        correct: 1,
+        relatedStep: 1,
+        explanation: "A separate DA Form 3862 must be maintained for each controlled substance, including each dosage form and strength, to ensure accurate accounting."
+    },
+    {
+        question: "When an irregularity is discovered during a controlled substance inventory, what is the FIRST action?",
+        options: [
+            "Make an immediate adjustment on the DA Form 3862",
+            "Destroy all suspect medications",
+            "Notify the NCOIC/OIC before making any adjustment",
+            "Notify the military police"
+        ],
+        correct: 2,
+        relatedStep: 6,
+        explanation: "The FIRST action is to notify the NCOIC/OIC. The reason for the irregularity must be determined BEFORE any adjustment is made to the record."
+    },
+    {
+        question: "What is the correct method for correcting an error on a paper DA Form 3862?",
+        options: [
+            "Use white-out to cover the error, then write the correct entry",
+            "Erase the error completely and rewrite",
+            "Draw a single line through the error, write the correction, and initial it with black ink",
+            "Tear out the page and start a new form"
+        ],
+        correct: 2,
+        relatedStep: 8,
+        explanation: "Corrections must be made by drawing a single line through the error with black ink, writing the correct entry, and initialing. White-out and erasure are strictly prohibited."
+    },
+    {
+        question: "Which of the following is PROHIBITED when correcting a DA Form 3862?",
+        options: [
+            "Initialing the correction",
+            "Drawing a single line through the error",
+            "Using white-out or erasure",
+            "Writing the correction in black ink"
+        ],
+        correct: 2,
+        relatedStep: 8,
+        explanation: "White-out, erasure, or any method that obscures the original entry is prohibited on controlled substance records."
+    },
+    {
+        question: "After completing the DA Form 3862 inventory, who must sign and date the form?",
+        options: [
+            "The unit commander",
+            "The pharmacy specialist conducting the inventory",
+            "Any senior NCO",
+            "The installation pharmacist only"
+        ],
+        correct: 1,
+        relatedStep: 5,
+        explanation: "The pharmacy specialist (or pharmacist) who conducted the inventory must sign and date the DA Form 3862 and record the amount inventoried."
+    },
+    {
+        question: "Both the NCOIC/OIC AND the Chief of Pharmacy must be notified of inventory irregularities. Why must the Chief of Pharmacy be notified?",
+        options: [
+            "It is not required to notify the Chief of Pharmacy",
+            "To ensure command-level oversight and compliance with AR 40-3",
+            "Only to notify CID",
+            "Only if the amount is over $500"
+        ],
+        correct: 1,
+        relatedStep: 9,
+        explanation: "AR 40-3 requires notification of both the NCOIC/OIC and the Chief of Pharmacy to ensure appropriate command oversight of controlled substance discrepancies."
+    },
+    {
+        question: "Which regulation primarily governs Army pharmacy operations and controlled substance management?",
+        options: [
+            "AR 40-501",
+            "AR 350-1",
+            "AR 40-3",
+            "DA Pam 30-22"
+        ],
+        correct: 2,
+        relatedStep: 1,
+        explanation: "AR 40-3 (Medical, Dental, and Veterinary Care) is the primary regulation governing Army pharmacy operations and controlled substance accountability."
+    },
+    {
+        question: "What are 'receipts' in the context of DA Form 3862 posting?",
+        options: [
+            "Only prescriptions dispensed to patients",
+            "Supply receipts and turn-ins that increase the on-hand balance",
+            "Expenditures that decrease the balance",
+            "End-of-day summaries"
+        ],
+        correct: 1,
+        relatedStep: 2,
+        explanation: "Receipts include supply receipts AND turn-ins — anything that adds to the on-hand balance. Both must be posted to the DA Form 3862."
+    },
+    {
+        question: "Which of the following is classified as an 'expenditure' when posting to DA Form 3862?",
+        options: [
+            "A new stock shipment arrival",
+            "A turn-in to supply",
+            "A medication dispensed on a prescription",
+            "A quarterly inventory count"
+        ],
+        correct: 2,
+        relatedStep: 3,
+        explanation: "Expenditures are medications dispensed (used) — they are subtracted from the on-hand balance. Supply receipts and turn-ins are receipts (additions)."
+    },
+    {
+        question: "Which TC publication provides detailed procedures for Army pharmacy controlled substance accountability?",
+        options: [
+            "TC 8-800",
+            "TC 8-260",
+            "TC 4-02.1",
+            "TC 3-04.11"
+        ],
+        correct: 1,
+        relatedStep: 1,
+        explanation: "TC 8-260 (Army Medical Department Pharmacy) provides detailed procedures for controlled substance accounting in Army pharmacies."
+    },
+    {
+        question: "What does an OVERAGE irregularity indicate on a controlled substance inventory?",
+        options: [
+            "Less medication on hand than the record shows",
+            "More medication on hand than the record shows",
+            "A prescription dispensing error",
+            "A receipt that was never posted"
+        ],
+        correct: 1,
+        relatedStep: 7,
+        explanation: "An overage means more controlled substance is physically on hand than the DA Form 3862 balance indicates — possible posting or receipt error."
+    },
+    {
+        question: "What does a SHORTAGE irregularity indicate on a controlled substance inventory?",
+        options: [
+            "More on hand than recorded",
+            "Less on hand than the DA Form 3862 balance shows",
+            "A form that was never signed",
+            "A supply requisition that was denied"
+        ],
+        correct: 1,
+        relatedStep: 7,
+        explanation: "A shortage means less controlled substance is physically on hand than the DA Form 3862 balance shows — could indicate diversion, dispensing error, or posting error."
+    },
+    {
+        question: "If an electronic system is used for controlled substance records, what additional document is required for corrections per AR 40-3?",
+        options: [
+            "An SF 600",
+            "A DA Form 4856",
+            "A Memorandum for Record (MFR) signed by the OIC or Chief of Pharmacy",
+            "No additional documents — electronic corrections are self-documenting"
+        ],
+        correct: 2,
+        relatedStep: 8,
+        explanation: "Electronic corrections require a Memorandum for Record (MFR) signed by the OIC or Chief of Pharmacy to document the reason for the change."
+    },
+    {
+        question: "What is the purpose of determining the reason for an irregularity BEFORE making an adjustment?",
+        options: [
+            "It is not required to determine a reason first",
+            "To ensure proper accountability and prevent undetected drug diversion",
+            "To delay reporting to allow for self-correction",
+            "To calculate the financial cost of the loss"
+        ],
+        correct: 1,
+        relatedStep: 7,
+        explanation: "Determining the cause first ensures that drug diversion or other criminal activity is not concealed by an administrative correction."
+    },
+    {
+        question: "Which form is used to report confirmed controlled substance loss or theft to authorities?",
+        options: [
+            "DA Form 3862",
+            "SF 600",
+            "DA Form 3949",
+            "DD Form 1380"
+        ],
+        correct: 2,
+        relatedStep: 6,
+        explanation: "DA Form 3949 (Controlled Substances Report) is submitted to report confirmed loss or theft of controlled substances."
+    },
+    {
+        question: "How are supply receipts for controlled substances posted to DA Form 3862?",
+        options: [
+            "As a subtraction from the current balance",
+            "As an addition to the current on-hand balance",
+            "They are not posted until the end of the month",
+            "They are posted only by the OIC"
+        ],
+        correct: 1,
+        relatedStep: 2,
+        explanation: "Supply receipts are posted as additions (credits) to the running balance on DA Form 3862, increasing the amount on hand."
+    },
+    {
+        question: "After completing the physical count, what must be verified during the inventory?",
+        options: [
+            "That all medications are past their expiration date",
+            "That the physical count matches the balance shown on DA Form 3862",
+            "That the OIC has signed all prescriptions",
+            "That the storage temperature is below 30°C"
+        ],
+        correct: 1,
+        relatedStep: 4,
+        explanation: "The physical count of each controlled substance must be verified against the running balance on DA Form 3862. Any discrepancy is an irregularity requiring investigation."
+    },
+    {
+        question: "Which of the following best describes a 'calculation error' irregularity?",
+        options: [
+            "A medication that was stolen",
+            "A math error in posting receipts, expenditures, or running balances on DA Form 3862",
+            "A drug that expired in storage",
+            "A requisition that was submitted late"
+        ],
+        correct: 1,
+        relatedStep: 7,
+        explanation: "A calculation error irregularity occurs when arithmetic mistakes in posting amounts cause the recorded balance to differ from the actual quantity on hand."
+    }
+];
+
+// ===== DYNAMIC TASK GLOBALS (set by loadTaskData each run) =====
+let STEPS         = null;
+let TOOLS         = null;
+let QUESTION_BANK = null;
+
+// ===== VALIDATOR DISPATCH TABLES =====
+const VALIDATORS_68W_0237 = {
+    1:  validateBSI,
+    2:  validateCleaning,
+    3:  validateDriverInsertion,
+    4:  validateSharpsDisposal,
+    5:  validateDressing,
+    6:  validateExtensionSet,
+    7:  validateSyringe,
+    8:  validateFlush,
+    10: validateDocumentation,
+    // step 9 (IO site check) is click-based — handled in canvas pointerup
+};
+
+const VALIDATORS_68Q_0034 = {
+    1: validateDA3862Records,
+    2: validateReceiptsPosted,
+    3: validateExpendituresPosted,
+    4: validateCountSubstances,
+    5: validateCompleteDA3862,
+    // steps 6, 7, 9 are click-based — handled in canvas pointerup
+    8: validateCorrectIrregularities,
+};
+
+// ===== TASK REGISTRY =====
+const TASK_REGISTRY = {
+    '081-68W-0237': {
+        name:        'Place an Intraosseous Device',
+        mos:         '68W',
+        totalSteps:  10,
+        conditions:  'You are in an operational environment with a casualty requiring IO infusion. Equipment provided: IO driver, cartridge, alcohol prep pads, sterile syringe, NS flush, extension set, gauze, biohazard bag, and SF 600.',
+        standards:   'Place an IO device IAW PHTLS Prehospital Trauma Life Support and TCCC Guidelines while adhering to all warnings and cautions, without error.',
+        steps:        STEPS_68W_0237,
+        tools:        TOOLS_68W_0237,
+        questionBank: QUESTION_BANK_68W_0237,
+        validators:   VALIDATORS_68W_0237,
+        resetFlags:   resetFlags_68W_0237,
+        showCaution: true,
+        objectives: [
+            'Demonstrate proper BSI procedures',
+            'Apply aseptic technique for site preparation',
+            'Position driver at 90-degree angle',
+            'Attach extension set before syringe',
+            'Flush catheter with 5-10mL saline',
+            'Secure catheter with dressing',
+            'Dispose of sharps without recapping',
+            'Document on SF 600',
+        ],
+        debriefObjectives: [
+            'Demonstrated proper BSI procedures',
+            'Applied aseptic technique for site preparation',
+            'Positioned EZ-IO driver at 90-degree angle',
+            'Attached extension set before syringe (safety)',
+            'Flushed catheter with appropriate saline volume',
+            'Secured catheter with dressing',
+            'Disposed of sharps properly without recapping',
+            'Documented procedure appropriately',
+        ],
+        taskSummary: 'You have practiced essential steps for establishing intraosseous access using the EZ-IO system at the humeral insertion site. This skill is critical for providing vascular access when traditional IV access is difficult or impossible in tactical and emergency settings.',
+        keyPoints: [
+            'Always observe BSI precautions',
+            'Use aseptic technique throughout',
+            'Position driver perpendicular (90°) to bone',
+            'Never attach syringe directly to hub - use extension set',
+            'Flush with 5-10mL saline, observe for infiltration',
+            'Never recap needles - sharps container only',
+            'Document all procedures IAW TCCC guidelines',
+        ],
+        scope: 'EZ-IO Humeral Insertion (Performance Measures 1-18). FAST1 sternal placement not included.',
+    },
+    '081-68Q-0034': {
+        name:        'Inventory Controlled Substances',
+        mos:         '68Q',
+        totalSteps:  9,
+        conditions:  'Given a pharmacy controlled substance vault with stock on hand. Equipment provided: DA Form 3862 records, supply receipts, expenditure records, and a pen (black ink). Applicable references: AR 40-3, TC 8-260.',
+        standards:   'Inventory all controlled substances IAW AR 40-3. All 9 performance measures must be completed correctly to standard. GO/NO-GO.',
+        steps:        STEPS_68Q_0034,
+        tools:        TOOLS_68Q_0034,
+        questionBank: QUESTION_BANK_68Q_0034,
+        validators:   VALIDATORS_68Q_0034,
+        resetFlags:   resetFlags_68Q_0034,
+        showCaution: false,
+        objectives: [
+            'Maintain separate accounting records per substance and dosage form',
+            'Post all receipts and turn-ins to DA Form 3862',
+            'Post all expenditures to the running balance',
+            'Physically count controlled substances and verify against records',
+            'Complete DA Form 3862 with signature, date, and amount inventoried',
+            'Report irregularities to NCOIC/OIC before making adjustments',
+            'Investigate and determine the reason for each irregularity',
+            'Correct documentation errors IAW regulatory standards',
+            'Notify Chief of Pharmacy of inventory results and corrections',
+        ],
+        debriefObjectives: [
+            'Maintained separate accounting records per substance and dosage form',
+            'Posted all receipts and turn-ins to DA Form 3862',
+            'Posted all expenditures to the running balance',
+            'Physically counted controlled substances and verified against records',
+            'Completed DA Form 3862 with signature, date, and amount inventoried',
+            'Reported irregularities to NCOIC/OIC before making adjustments',
+            'Investigated and determined the reason for each irregularity',
+            'Corrected documentation errors IAW regulatory standards',
+            'Notified Chief of Pharmacy of inventory results and corrections',
+        ],
+        taskSummary: 'You have practiced essential steps for conducting a controlled substance vault inventory IAW AR 40-3. This skill is critical for maintaining accurate accountability of controlled substances and ensuring regulatory compliance in a pharmacy setting.',
+        keyPoints: [
+            'Maintain separate records for each substance and dosage form',
+            'Post all receipts, turn-ins, and expenditures to DA Form 3862',
+            'Physically verify counts against records each inventory',
+            'Always sign and date DA Form 3862 with amount inventoried',
+            'Report all irregularities to NCOIC/OIC before adjusting records',
+            'Document and investigate the cause of each irregularity',
+            'Notify Chief of Pharmacy of all inventory results and corrections',
+        ],
+        scope: 'Controlled substance vault inventory IAW AR 40-3 (Performance Measures 1-9). Biennial inventory procedures not included.',
+    }
+};
+
+// ===== TASK LOADER =====
+function loadTaskData(taskId) {
+    const t = TASK_REGISTRY[taskId];
+    if (!t) { console.error('Unknown taskId:', taskId); return; }
+    STEPS               = t.steps;
+    TOOLS               = t.tools;
+    QUESTION_BANK       = t.questionBank;
+    TASK_NAME           = t.name;
+    TASK_NUMBER         = taskId;
+    state.totalSteps    = t.totalSteps;
+    state.activeValidators = t.validators;
+    t.resetFlags();
+
+    // Update HUD task code and step total
+    const hudCode = document.getElementById('task-code-hud');
+    if (hudCode) hudCode.textContent = taskId;
+    const stepTotal = document.getElementById('step-total-display');
+    if (stepTotal) stepTotal.textContent = t.totalSteps;
+}
+
+// ===== TASK-SPECIFIC FLAG RESET FUNCTIONS =====
+function resetFlags_68W_0237() {
+    state.bsiDonned         = { gloves: false, eyePro: false };
+    state.driverInserted    = false;
+    state.extensionAttached = false;
+    state.syringeAttached   = false;
+    state.flushed           = false;
+    state.dressingApplied   = false;
+    state.sharpsDisposed    = false;
+    state.styletDisposed    = false;
+    state.documented        = false;
+    state.siteChecked       = false;
+    state.permanentItems    = [];
+}
+
+function resetFlags_68Q_0034() {
+    state.da3862RecordsMaintained = false;
+    state.receiptsPosted          = false;
+    state.expendituresPosted      = false;
+    state.substancesCounted       = false;
+    state.da3862Completed         = false;
+    state.ncoicNotified           = false;
+    state.irregularityDetermined  = false;
+    state.irregularitiesCorrected = false;
+    state.chiefNotified           = false;
+    state.permanentItems          = [];
+}
+
+// ===== 68Q DROP VALIDATORS =====
+function getVaultTarget() {
+    return { x: CONFIG.VAULT_FORM_TARGET.x * canvas.width, y: CONFIG.VAULT_FORM_TARGET.y * canvas.height };
+}
+
+function getCountingTrayTarget() {
+    return { x: CONFIG.COUNTING_TRAY_TARGET.x * canvas.width, y: CONFIG.COUNTING_TRAY_TARGET.y * canvas.height };
+}
+
+function validateDA3862Records(item) {
+    if (item.type !== 'da_form_3862') {
+        showFeedback('Drag the DA Form 3862 to the substance binder', 'error');
+        logError(); return;
+    }
+    const target = getVaultTarget();
+    if (distance(item, target) < tol(CONFIG.HIT_TOLERANCE * 2)) {
+        state.da3862RecordsMaintained = true;
+        showFeedback('✓ Separate DA Form 3862 maintained for each controlled substance', 'success');
+        document.querySelector(`[data-tool-key="${item.type}"]`)?.classList.add('used');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Drag the form to the substance binder shelf area', 'error');
+        logError();
+    }
+}
+
+function validateReceiptsPosted(item) {
+    if (item.type !== 'supply_receipt') {
+        showFeedback('Drag the supply receipt to the DA Form 3862', 'error');
+        logError(); return;
+    }
+    const target = getVaultTarget();
+    if (distance(item, target) < tol(CONFIG.HIT_TOLERANCE * 2)) {
+        state.receiptsPosted = true;
+        showFeedback('✓ All receipts and turn-ins posted to DA Form 3862', 'success');
+        document.querySelector(`[data-tool-key="${item.type}"]`)?.classList.add('used');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Drag the receipt to the DA Form 3862 on the shelf', 'error');
+        logError();
+    }
+}
+
+function validateExpendituresPosted(item) {
+    if (item.type !== 'expenditure_record') {
+        showFeedback('Drag the expenditure record to the DA Form 3862', 'error');
+        logError(); return;
+    }
+    const target = getVaultTarget();
+    if (distance(item, target) < tol(CONFIG.HIT_TOLERANCE * 2)) {
+        state.expendituresPosted = true;
+        showFeedback('✓ All expenditures posted to DA Form 3862', 'success');
+        document.querySelector(`[data-tool-key="${item.type}"]`)?.classList.add('used');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Drag the expenditure record to the DA Form 3862', 'error');
+        logError();
+    }
+}
+
+function validateCountSubstances(item) {
+    if (item.type !== 'medication_bottle') {
+        showFeedback('Drag the controlled substance bottle to the counting tray', 'error');
+        logError(); return;
+    }
+    const target = getCountingTrayTarget();
+    if (distance(item, target) < tol(CONFIG.HIT_TOLERANCE * 2)) {
+        state.substancesCounted = true;
+        showFeedback('✓ Physical count complete — count matches DA Form 3862 balance', 'success');
+        document.querySelector(`[data-tool-key="${item.type}"]`)?.classList.add('used');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Drag the controlled substance to the counting tray', 'error');
+        logError();
+    }
+}
+
+function validateCompleteDA3862(item) {
+    if (item.type !== 'pen') {
+        showFeedback('Use the pen (black ink) to sign the DA Form 3862', 'error');
+        logError(); return;
+    }
+    const target = getVaultTarget();
+    if (distance(item, target) < tol(CONFIG.HIT_TOLERANCE * 2)) {
+        state.da3862Completed = true;
+        showFeedback('✓ DA Form 3862 signed, dated, and amount inventoried recorded', 'success');
+        document.querySelector(`[data-tool-key="${item.type}"]`)?.classList.add('used');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Drag the pen to the signature block on the DA Form 3862', 'error');
+        logError();
+    }
+}
+
+function validateCorrectIrregularities(item) {
+    if (item.type !== 'pen') {
+        showFeedback('Use the pen to make a single-line correction on the form', 'error');
+        logError(); return;
+    }
+    const target = getVaultTarget();
+    if (distance(item, target) < tol(CONFIG.HIT_TOLERANCE * 2)) {
+        state.irregularitiesCorrected = true;
+        showFeedback('✓ Irregularities corrected — single line, initialed in black ink', 'success');
+        document.querySelector(`[data-tool-key="${item.type}"]`)?.classList.add('used');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Drag the pen to the erroneous entry on the DA Form 3862', 'error');
+        logError();
+    }
+}
+
+// ===== 68Q CLICK-BASED VALIDATORS =====
+function handlePharmacyClick(pt) {
+    if (state.currentStep === 6) {
+        validateNcoicNotification(pt);
+    } else if (state.currentStep === 7) {
+        validateIrregularityDetermination(pt);
+    } else if (state.currentStep === 9) {
+        validateChiefNotification(pt);
+    }
+}
+
+function validateNcoicNotification(pt) {
+    const cx = CONFIG.NCOIC_CENTER.x * canvas.width;
+    const cy = CONFIG.NCOIC_CENTER.y * canvas.height;
+    if (distance(pt, { x: cx, y: cy }) < tol(CONFIG.HIT_TOLERANCE * 3)) {
+        state.ncoicNotified = true;
+        showFeedback('✓ NCOIC/OIC notified of inventory irregularities', 'success');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Click the NCOIC/OIC figure to report irregularities', 'error');
+        logError();
+        updateUI();
+    }
+}
+
+function validateIrregularityDetermination(pt) {
+    const hit = CONFIG.IRREGULARITY_ZONES.some(zone => {
+        const zx = zone.x * canvas.width;
+        const zy = zone.y * canvas.height;
+        return distance(pt, { x: zx, y: zy }) < tol(CONFIG.HIT_TOLERANCE * 2);
+    });
+    if (hit) {
+        state.irregularityDetermined = true;
+        showFeedback('✓ Irregularity reason determined before making any adjustment', 'success');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Click an irregularity type to investigate the reason', 'error');
+        logError();
+        updateUI();
+    }
+}
+
+function validateChiefNotification(pt) {
+    const cx = CONFIG.CHIEF_CENTER.x * canvas.width;
+    const cy = CONFIG.CHIEF_CENTER.y * canvas.height;
+    if (distance(pt, { x: cx, y: cy }) < tol(CONFIG.HIT_TOLERANCE * 3)) {
+        state.chiefNotified = true;
+        showFeedback('✓ Chief of Pharmacy notified of inventory results and corrections', 'success');
+        setTimeout(() => advanceStep(), 1500);
+    } else {
+        showFeedback('Click the Chief of Pharmacy to report inventory results', 'error');
+        logError();
+        updateUI();
+    }
+}
+
 // ===== CANVAS & RENDERING =====
 let canvas, ctx, particleCanvas, particleCtx;
 let images = {};
@@ -735,14 +1546,20 @@ function animateParticles() {
 
 function loadImages() {
     const imageList = [
-        // Step 1 BSI visuals
+        // Step 1 BSI visuals (68W)
         { key: 'hands', src: 'hands.png' },
         { key: 'face', src: 'face.png' },
-        // Step 4 stylet (scene-only draggable)
+        // Step 4 stylet (scene-only draggable, 68W)
         { key: 'stylet', src: 'stylet.png' },
         { key: 'target_humeral', src: 'target_humeral.png' },
         { key: 'io_hub', src: 'io_hub.png' },
-        ...Object.keys(TOOLS).map(key => ({ key, src: TOOLS[key].image }))
+        // 68Q scene backgrounds
+        { key: 'pharmacy_vault_bg', src: 'pharmacy_vault_bg.png' },
+        { key: 'counting_area_bg', src: 'counting_area_bg.png' },
+        // 68W tools
+        ...Object.keys(TOOLS_68W_0237).map(key => ({ key, src: TOOLS_68W_0237[key].image })),
+        // 68Q tools
+        ...Object.keys(TOOLS_68Q_0034).map(key => ({ key, src: TOOLS_68Q_0034[key].image })),
     ];
     
     const totalToLoad = imageList.length;
@@ -801,7 +1618,7 @@ function renderScene() {
             const humeralY = canvas.height/2 - 222;
             ctx.drawImage(images.target_humeral, humeralX, humeralY, 561, 445);
         }
-        
+
         // Debug hotspots
         if (state.showHotspots) {
             const center = getHumeralCenter();
@@ -809,12 +1626,148 @@ function renderScene() {
             ctx.beginPath();
             ctx.arc(center.x, center.y, CONFIG.HIT_TOLERANCE, 0, Math.PI * 2);
             ctx.fill();
-            
+
             ctx.fillStyle = 'red';
             ctx.beginPath();
             ctx.arc(center.x, center.y, 5, 0, Math.PI * 2);
             ctx.fill();
         }
+    } else if (state.currentScene === 'pharmacy-vault') {
+        if (images.pharmacy_vault_bg) {
+            ctx.drawImage(images.pharmacy_vault_bg, 0, 0, canvas.width, canvas.height);
+        } else {
+            // Placeholder background
+            ctx.fillStyle = '#0d1f16';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#1a3a25';
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.7);
+            ctx.fillStyle = '#2a5a38';
+            ctx.fillRect(40, 40, canvas.width - 80, canvas.height * 0.55);
+            ctx.fillStyle = 'rgba(212,175,55,0.15)';
+            ctx.fillRect(40, 40, canvas.width - 80, 30);
+            ctx.fillStyle = '#d4af37';
+            ctx.font = 'bold 13px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('PHARMACY CONTROLLED SUBSTANCE VAULT', canvas.width / 2, 62);
+            ctx.textAlign = 'left';
+        }
+
+        // Drop target zone (steps 1-3, 5, 8)
+        if ([1, 2, 3, 5, 8].includes(state.currentStep)) {
+            const tx = CONFIG.VAULT_FORM_TARGET.x * canvas.width;
+            const ty = CONFIG.VAULT_FORM_TARGET.y * canvas.height;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(212,175,55,0.7)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.strokeRect(tx - 65, ty - 90, 130, 180);
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'rgba(212,175,55,0.08)';
+            ctx.fillRect(tx - 65, ty - 90, 130, 180);
+            ctx.fillStyle = 'rgba(212,175,55,0.8)';
+            ctx.font = '11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('DA FORM 3862', tx, ty + 105);
+            ctx.textAlign = 'left';
+            ctx.restore();
+        }
+
+        // Step 6: NCOIC/OIC click target
+        if (state.currentStep === 6) {
+            const nx = CONFIG.NCOIC_CENTER.x * canvas.width;
+            const ny = CONFIG.NCOIC_CENTER.y * canvas.height;
+            ctx.save();
+            ctx.fillStyle = 'rgba(80,160,80,0.75)';
+            ctx.fillRect(nx - 38, ny - 65, 76, 130);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('NCOIC/OIC', nx, ny - 72);
+            ctx.fillStyle = 'rgba(80,200,80,0.9)';
+            ctx.font = '10px monospace';
+            ctx.fillText('[CLICK TO REPORT]', nx, ny + 80);
+            ctx.textAlign = 'left';
+            ctx.restore();
+        }
+
+        // Step 7: Irregularity zone click targets
+        if (state.currentStep === 7) {
+            ctx.save();
+            CONFIG.IRREGULARITY_ZONES.forEach(zone => {
+                const zx = zone.x * canvas.width;
+                const zy = zone.y * canvas.height;
+                ctx.fillStyle = 'rgba(200,140,40,0.75)';
+                ctx.fillRect(zx - 42, zy - 22, 84, 44);
+                ctx.strokeStyle = '#d4af37';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(zx - 42, zy - 22, 84, 44);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(zone.label, zx, zy + 4);
+            });
+            ctx.fillStyle = 'rgba(212,175,55,0.85)';
+            ctx.font = '11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('CLICK AN IRREGULARITY TYPE TO INVESTIGATE', canvas.width / 2, canvas.height * 0.55);
+            ctx.textAlign = 'left';
+            ctx.restore();
+        }
+
+        // Step 9: Chief of Pharmacy click target
+        if (state.currentStep === 9) {
+            const cx2 = CONFIG.CHIEF_CENTER.x * canvas.width;
+            const cy2 = CONFIG.CHIEF_CENTER.y * canvas.height;
+            ctx.save();
+            ctx.fillStyle = 'rgba(60,80,180,0.75)';
+            ctx.fillRect(cx2 - 38, cy2 - 65, 76, 130);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('CHIEF OF', cx2, cy2 - 72);
+            ctx.fillText('PHARMACY', cx2, cy2 - 58);
+            ctx.fillStyle = 'rgba(120,160,255,0.9)';
+            ctx.font = '10px monospace';
+            ctx.fillText('[CLICK TO REPORT]', cx2, cy2 + 80);
+            ctx.textAlign = 'left';
+            ctx.restore();
+        }
+
+    } else if (state.currentScene === 'counting-area') {
+        if (images.counting_area_bg) {
+            ctx.drawImage(images.counting_area_bg, 0, 0, canvas.width, canvas.height);
+        } else {
+            // Placeholder background
+            ctx.fillStyle = '#1a1a0d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#2e2e1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#4a4535';
+            ctx.fillRect(80, 160, canvas.width - 160, canvas.height - 240);
+            ctx.fillStyle = '#d4af37';
+            ctx.font = 'bold 13px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('CONTROLLED SUBSTANCE COUNTING AREA', canvas.width / 2, 145);
+            ctx.textAlign = 'left';
+        }
+
+        // Counting tray drop zone
+        const ttx = CONFIG.COUNTING_TRAY_TARGET.x * canvas.width;
+        const tty = CONFIG.COUNTING_TRAY_TARGET.y * canvas.height;
+        ctx.save();
+        ctx.fillStyle = 'rgba(212,175,55,0.12)';
+        ctx.fillRect(ttx - 90, tty - 55, 180, 110);
+        ctx.strokeStyle = 'rgba(212,175,55,0.8)';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(ttx - 90, tty - 55, 180, 110);
+        ctx.fillStyle = '#d4af37';
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('COUNTING TRAY', ttx, tty + 5);
+        ctx.font = '10px monospace';
+        ctx.fillText('DROP SUBSTANCE HERE', ttx, tty + 22);
+        ctx.textAlign = 'left';
+        ctx.restore();
     }
     
     // Draw permanent items (hub, extension, syringe, dressing)
@@ -837,14 +1790,6 @@ function renderScene() {
         ctx.drawImage(images[state.draggedItem.imageKey], -state.draggedItem.width/2, -state.draggedItem.height/2, state.draggedItem.width, state.draggedItem.height);
         ctx.restore();
         
-        // Show needle tip in debug
-        if (state.showNeedleTip && state.draggedItem.type === 'io_driver') {
-            const tipPos = calculateDriverTipPosition(state.draggedItem);
-            ctx.fillStyle = 'blue';
-            ctx.beginPath();
-            ctx.arc(tipPos.x, tipPos.y, 5, 0, Math.PI * 2);
-            ctx.fill();
-        }
     }
 }
 
@@ -978,6 +1923,8 @@ function showScreen(screenId) {
     const el = document.getElementById(screenId);
     el.classList.remove('hidden');
     state.currentScreen = screenId;
+    // Hide site nav/footer during training; restore on all other screens
+    document.body.classList.toggle('training-active', screenId === 'training-screen');
 
     // Mobile browsers keep scroll position when swapping screens.
     // Force the view to the top of the newly shown screen.
@@ -992,22 +1939,18 @@ function showScreen(screenId) {
 }
 
 function startTraining() {
-    // Hard reset run-specific state so repeat runs don't carry over.
-    state.bsiDonned = { gloves: false, eyePro: false };
-    state.driverInserted = false;
-    state.extensionAttached = false;
-    state.syringeAttached = false;
-    state.flushed = false;
-    state.dressingApplied = false;
-    state.sharpsDisposed = false;
-    state.documented = false;
-    state.siteChecked = false;
-    state.permanentItems = [];
+    // Load task-specific data and reset task-specific flags.
+    loadTaskData(state.selectedTask);
 
     state.startTime = Date.now();
     state.currentStep = 1;
     state.errors = 0;
     state.stepsCompleted.clear();
+    state.stepsWithErrors.clear();
+
+    const activeMode = document.querySelector('.mode-btn.active');
+    state.trainingMode = activeMode ? activeMode.dataset.mode : 'instructional';
+    state.evaluationToolOrder = shuffleArray(Object.keys(TOOLS));
 
     // Ensure the Step 1 scene is active
     state.currentScene = STEPS[1].scene;
@@ -1040,11 +1983,30 @@ function stopTimer() {
     if (timerInterval) clearInterval(timerInterval);
 }
 
+function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function logError() {
+    state.errors++;
+    state.stepsWithErrors.add(state.currentStep);
+}
+
 // ===== UI UPDATES =====
 function updateUI() {
     const stepInfo = STEPS[state.currentStep];
-    document.getElementById('step-title').textContent = stepInfo.title;
-    document.getElementById('step-instruction').textContent = stepInfo.instruction;
+    document.getElementById('step-title').textContent =
+        state.trainingMode === 'evaluation'
+            ? `STEP ${state.currentStep} / ${state.totalSteps}`
+            : stepInfo.title;
+    const instrEl = document.getElementById('step-instruction');
+    instrEl.style.display = state.trainingMode === 'evaluation' ? 'none' : '';
+    instrEl.textContent = stepInfo.instruction;
     
     // Update step indicator
     document.getElementById('current-step-display').textContent = state.currentStep;
@@ -1065,15 +2027,21 @@ function updateUI() {
         if (state.stepsCompleted.has(stepNum)) {
             item.classList.add('completed');
             item.querySelector('.status-icon').textContent = '✅';
-        } else if (stepNum === state.currentStep) {
+        } else if (stepNum === state.currentStep && state.trainingMode !== 'evaluation') {
             item.classList.add('current');
         }
+        const stepNameEl = item.querySelector('.step-name');
+        if (stepNameEl && STEPS[stepNum]) {
+            stepNameEl.textContent = state.trainingMode === 'evaluation'
+                ? `PERFORMANCE MEASURE ${stepNum}`
+                : STEPS[stepNum].title;
+        }
     });
-    
+
     updateToolsPanel();
 
-    // Step-specific scene setup
-    if (state.currentStep === 4) {
+    // Step-specific scene setup (68W only)
+    if (state.selectedTask === '081-68W-0237' && state.currentStep === 4) {
         setupStep4SharpsScene();
     }
 }
@@ -1081,14 +2049,17 @@ function updateUI() {
 function updateToolsPanel() {
     const container = document.getElementById('tools-container');
     container.innerHTML = '';
-    
-    const stepInfo = STEPS[state.currentStep];
-    if (!stepInfo.requiredTools || stepInfo.requiredTools.length === 0) {
+
+    const toolKeys = state.trainingMode === 'evaluation'
+        ? state.evaluationToolOrder
+        : (STEPS[state.currentStep].requiredTools || []);
+
+    if (toolKeys.length === 0) {
         container.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 20px;">No tools required for this step</p>';
         return;
     }
-    
-    stepInfo.requiredTools.forEach(toolKey => {
+
+    toolKeys.forEach(toolKey => {
         const tool = TOOLS[toolKey];
         if (!tool) return;
         
@@ -1103,9 +2074,14 @@ function updateToolsPanel() {
         const name = document.createElement('div');
         name.className = 'tool-name';
         name.textContent = tool.name;
-        
+
+        const dragHint = document.createElement('div');
+        dragHint.className = 'tool-drag-hint';
+        dragHint.textContent = IS_COARSE_POINTER ? 'HOLD & DRAG' : 'DRAG TO SCENE';
+
         toolDiv.appendChild(img);
         toolDiv.appendChild(name);
+        toolDiv.appendChild(dragHint);
         container.appendChild(toolDiv);
         
         toolDiv.addEventListener('pointerdown', startDrag, { passive: false });
@@ -1117,10 +2093,13 @@ function showFeedback(message, type = 'info') {
     feedbackEl.textContent = message;
     feedbackEl.className = 'feedback-overlay ' + type;
     feedbackEl.classList.remove('hidden');
-    
-    setTimeout(() => {
+
+    // 2D — Errors stay longer so users can read why they failed
+    const duration = type === 'error' ? 3500 : CONFIG.FEEDBACK_DURATION;
+    if (state.feedbackTimer) clearTimeout(state.feedbackTimer);
+    state.feedbackTimer = setTimeout(() => {
         feedbackEl.classList.add('hidden');
-    }, CONFIG.FEEDBACK_DURATION);
+    }, duration);
 }
 
 function advanceStep() {
@@ -1163,15 +2142,71 @@ function completeSimulation() {
     const elapsedTime = Date.now() - state.startTime;
     const minutes = Math.floor(elapsedTime / 60000);
     const seconds = Math.floor((elapsedTime % 60000) / 1000);
-    
+
     document.getElementById('debrief-steps').textContent = `${state.stepsCompleted.size}/${state.totalSteps}`;
     document.getElementById('debrief-errors').textContent = state.errors;
     document.getElementById('debrief-time').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    
+
+    const evalFailed = state.trainingMode === 'evaluation' && state.errors > 0;
+
+    // Toggle banner
+    const banner = document.getElementById('debrief-banner');
+    const resultIcon = document.getElementById('debrief-result-icon');
+    const resultTitle = document.getElementById('debrief-result-title');
+    if (evalFailed) {
+        banner.classList.add('fail');
+        resultIcon.textContent = '✗';
+        resultTitle.textContent = 'PERFORMANCE EVALUATION: NOT PASSED';
+    } else {
+        banner.classList.remove('fail');
+        resultIcon.textContent = '✓';
+        resultTitle.textContent = 'SIMULATION COMPLETE';
+    }
+
+    // Hide proceed button and objectives in fail state
+    document.getElementById('proceed-to-test-btn').style.display = evalFailed ? 'none' : '';
+    document.getElementById('debrief-objectives').style.display = evalFailed ? 'none' : '';
+
+    // Populate and show error breakdown in fail state
+    const breakdownEl = document.getElementById('debrief-error-breakdown');
+    if (evalFailed) {
+        const stepNums = [...state.stepsWithErrors].sort((a, b) => a - b);
+        const items = stepNums.map(n => {
+            const g = STEPS[n].remedialGuidance;
+            return `<div class="error-step-item">
+                <div class="error-step-label">⚠ PERFORMANCE MEASURE ${n}: ${g.title}</div>
+                <div class="error-step-desc">${g.description}</div>
+            </div>`;
+        }).join('');
+        breakdownEl.innerHTML = `<div class="error-breakdown-title">AREAS REQUIRING REMEDIATION</div>${items}`;
+        breakdownEl.style.display = '';
+    } else {
+        breakdownEl.style.display = 'none';
+    }
+
+    // Populate debrief content from registry
+    const taskData = TASK_REGISTRY[TASK_NUMBER];
+    if (taskData) {
+        const objList = document.getElementById('debrief-objectives-list');
+        if (objList && taskData.debriefObjectives) {
+            objList.innerHTML = taskData.debriefObjectives
+                .map(o => `<div class="objective-achieved">✅ ${o}</div>`)
+                .join('');
+        }
+        const titleEl = document.getElementById('debrief-task-title');
+        if (titleEl) titleEl.innerHTML = `<strong>Task ${TASK_NUMBER}: ${taskData.name}</strong>`;
+        const descEl = document.getElementById('debrief-task-desc');
+        if (descEl && taskData.taskSummary) descEl.textContent = taskData.taskSummary;
+        const kpList = document.getElementById('debrief-key-points-list');
+        if (kpList && taskData.keyPoints) {
+            kpList.innerHTML = taskData.keyPoints.map(p => `<li>${p}</li>`).join('');
+        }
+    }
+
     showScreen('debrief-screen');
 }
 // ===== DRAG GUARDS (prevents "instant drop" on some enterprise builds) =====
-const DRAG_START_THRESHOLD_PX = 8; // movement required before we consider it a real drag
+const DRAG_START_THRESHOLD_PX = IS_COARSE_POINTER ? 14 : 8; // movement required before we consider it a real drag
 
 const dragGuard = {
   isDragging: false,
@@ -1242,6 +2277,9 @@ function startDrag(e) {
   // Capture pointer so drag continues reliably
   toolDiv.setPointerCapture?.(e.pointerId);
 
+  // Lock page scrolling for the entire drag gesture
+  document.body.style.overflow = 'hidden';
+
   document.addEventListener('pointermove', drag, { passive: false });
   document.addEventListener('pointerup', endDrag, { passive: false });
   document.addEventListener('pointercancel', endDrag, { passive: false });
@@ -1276,6 +2314,9 @@ function startSceneDrag(sceneItem, startX, startY, pointerId) {
 
   canvas.classList.add('dragging');
 
+  // Lock page scrolling for the entire drag gesture
+  document.body.style.overflow = 'hidden';
+
   document.addEventListener('pointermove', drag, { passive: false });
   document.addEventListener('pointerup', endDrag, { passive: false });
   document.addEventListener('pointercancel', endDrag, { passive: false });
@@ -1296,6 +2337,9 @@ function drag(e) {
   // Only consider this a real drag after crossing the threshold
   if (!dragGuard.hasMoved && (dx * dx + dy * dy) >= (DRAG_START_THRESHOLD_PX * DRAG_START_THRESHOLD_PX)) {
     dragGuard.hasMoved = true;
+
+    // Scroll canvas into view so user can see where they are dropping
+    canvas.scrollIntoView({ block: 'center', behavior: 'smooth' });
 
     // If this drag started from a tool in the panel, instantiate the dragged item now
     if (dragGuard.startedOnTool && !state.draggedItem && dragGuard.pendingToolKey) {
@@ -1347,6 +2391,9 @@ function endDrag(e) {
   document.removeEventListener('mousemove', drag);
   document.removeEventListener('mouseup', endDrag);
 
+  // Restore scroll
+  document.body.style.overflow = '';
+
   // HARD GUARDS:
   // 1) If the pointer never actually moved, treat as "cancel" (prevents instant validation on clicky enterprise builds).
   // 2) If the pointer-up happened outside the canvas, treat as "cancel" (user didn’t drop on work area).
@@ -1383,34 +2430,10 @@ function endDrag(e) {
   renderScene();
 }
 
-// Keyboard rotation
-document.addEventListener('keydown', (e) => {
-    if (!state.draggedItem || state.draggedItem.type !== 'io_driver') return;
-    
-    if (e.key === 'q' || e.key === 'Q') {
-        state.draggedItem.rotation = (state.draggedItem.rotation || 0) - 5;
-        renderScene();
-    } else if (e.key === 'e' || e.key === 'E') {
-        state.draggedItem.rotation = (state.draggedItem.rotation || 0) + 5;
-        renderScene();
-    }
-});
-
 // ===== VALIDATION =====
 function validateDrop(item) {
-    const step = state.currentStep;
-    
-    switch(step) {
-        case 1: validateBSI(item); break;
-        case 2: validateCleaning(item); break;
-        case 3: validateDriverInsertion(item); break;
-        case 4: validateSharpsDisposal(item); break;
-        case 5: validateDressing(item); break;
-        case 6: validateExtensionSet(item); break;
-        case 7: validateSyringe(item); break;
-        case 8: validateFlush(item); break;
-        case 10: validateDocumentation(item); break;
-    }
+    const validator = state.activeValidators[state.currentStep];
+    if (validator) validator(item);
 }
 
 function validateBSI(item) {
@@ -1440,7 +2463,7 @@ function validateBSI(item) {
             if (el) el.classList.add('used');
         } else {
             showFeedback('Place gloves on the hands', 'error');
-            state.errors++;
+            logError();
         }
     } else if (item.type === 'eye_pro') {
         const dist = distance(item, faceCenter);
@@ -1462,11 +2485,11 @@ function validateBSI(item) {
             if (el) el.classList.add('used');
         } else {
             showFeedback('Place eye protection on the face', 'error');
-            state.errors++;
+            logError();
         }
     } else {
         showFeedback('Use gloves and eye protection for BSI', 'error');
-        state.errors++;
+        logError();
     }
 
     if (state.bsiDonned.gloves && state.bsiDonned.eyePro) {
@@ -1480,7 +2503,7 @@ function validateBSI(item) {
 function validateCleaning(item) {
     if (item.type !== 'alcohol_pad') {
         showFeedback('Use the alcohol prep pad', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
@@ -1493,14 +2516,14 @@ function validateCleaning(item) {
         setTimeout(() => advanceStep(), 1500);
     } else {
         showFeedback('Position over the humeral insertion site', 'error');
-        state.errors++;
+        logError();
     }
 }
 
 function validateDriverInsertion(item) {
     if (item.type !== 'io_driver') {
         showFeedback('Use the EZ-IO driver', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
@@ -1529,24 +2552,24 @@ function validateDriverInsertion(item) {
             setTimeout(() => advanceStep(), 1500);
         } else {
             showFeedback(`Driver must be perpendicular (90°). Current angle off by ${angleFromVertical.toFixed(0)}°`, 'error');
-            state.errors++;
+            logError();
         }
     } else {
         showFeedback('Position the needle tip over the insertion site. Use Q/E to rotate.', 'error');
-        state.errors++;
+        logError();
     }
 }
 
 function validateExtensionSet(item) {
     if (item.type !== 'extension_set') {
         showFeedback('Attach the extension set', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
     if (!state.driverInserted) {
         showFeedback('Complete driver insertion first', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
@@ -1578,20 +2601,20 @@ function validateExtensionSet(item) {
         setTimeout(() => advanceStep(), 1500);
     } else {
         showFeedback('Place the WHITE end of the extension set directly over the IO hub', 'error');
-        state.errors++;
+        logError();
     }
 }
 
 function validateSyringe(item) {
     if (item.type !== 'syringe') {
         showFeedback('Attach the saline syringe', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
     if (!state.extensionAttached) {
         showFeedback('Attach extension set first', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
@@ -1599,7 +2622,7 @@ function validateSyringe(item) {
     const ext = state.permanentItems.find(it => it.imageKey === 'extension_set');
     if (!ext) {
         showFeedback('Attach extension set first', 'error');
-        state.errors++;
+        logError();
         return;
     }
 
@@ -1629,20 +2652,20 @@ function validateSyringe(item) {
         setTimeout(() => advanceStep(), 1500);
     } else {
         showFeedback('Connect the syringe tip to the BLUE part of the extension set', 'error');
-        state.errors++;
+        logError();
     }
 }
 
 function validateFlush(item) {
     if (item.type !== 'plunger') {
         showFeedback('Use the plunger to flush', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
     if (!state.syringeAttached) {
         showFeedback('Attach syringe first', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
@@ -1662,7 +2685,7 @@ function validateFlush(item) {
 function validateDressing(item) {
     if (item.type !== 'io_dressing') {
         showFeedback('Apply the IO dressing', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
@@ -1685,7 +2708,7 @@ function validateDressing(item) {
         setTimeout(() => advanceStep(), 1500);
     } else {
         showFeedback('Position dressing over the insertion site', 'error');
-        state.errors++;
+        logError();
     }
 }
 
@@ -1693,7 +2716,7 @@ function validateSharpsDisposal(item) {
     // Step 4: Drag the stylet into the sharps container (both are present in the scene)
     if (item.type !== 'stylet') {
         showFeedback('Drag the stylet into the sharps container', 'error');
-        state.errors++;
+        logError();
         updateUI();
         // Re-add stylet to hub if user dropped a wrong item (or nothing)
         setupStep4SharpsScene();
@@ -1708,7 +2731,7 @@ function validateSharpsDisposal(item) {
     if (!sharpsItem) {
         setupStep4SharpsScene();
         showFeedback('Sharps container missing. Rebuilding Step 4 scene.', 'error');
-        state.errors++;
+        logError();
         updateUI();
         return;
     }
@@ -1732,7 +2755,7 @@ function validateSharpsDisposal(item) {
         setTimeout(() => advanceStep(), 900);
     } else {
         showFeedback('Drop the stylet INTO the sharps container', 'error');
-        state.errors++;
+        logError();
         updateUI();
         // Put the stylet back over the hub for another attempt
         const styletW = 256 * CONFIG.STEP4_STYLET_SCALE;
@@ -1752,7 +2775,7 @@ function validateSharpsDisposal(item) {
 function validateDocumentation(item) {
     if (item.type !== 'sf600') {
         showFeedback('Complete the SF 600 form', 'error');
-        state.errors++;
+        logError();
         return;
     }
     
@@ -1769,7 +2792,11 @@ function initTest() {
     state.currentTest = shuffled.slice(0, 10);
     state.currentQuestionIndex = 0;
     state.userAnswers = new Array(10).fill(null);
-    
+
+    // 5B — carry task context forward to test screen
+    const testTaskNum = document.getElementById('test-task-number');
+    if (testTaskNum && state.selectedTask) testTaskNum.textContent = state.selectedTask;
+
     showScreen('test-screen');
     displayQuestion();
 }
@@ -1981,14 +3008,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial render for MOS screen if user lands there (e.g., via reload)
     renderMosGrid();
 
-    // Populate dynamic task text (used on the congratulations screen).
-    const taskNameEl = document.getElementById('task-name-dynamic');
-    if (taskNameEl) taskNameEl.textContent = TASK_NAME;
-    const taskNumEl = document.getElementById('task-number-dynamic');
-    if (taskNumEl) taskNumEl.textContent = `Task ${TASK_NUMBER}`;
-    const taskNumHl = document.getElementById('task-number-highlight');
-    if (taskNumHl) taskNumHl.textContent = TASK_NUMBER;
-
     // Initialize canvas + preload images (guarded so a missing element doesn't
     // kill all event wiring).
     try {
@@ -1998,25 +3017,34 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Initialization error:', err);
     }
 
-    // Canvas pointerup (mobile-friendly tap handler for Step 9)
+    // Canvas pointerup: tap handler for click-based steps
     if (canvas) canvas.addEventListener('pointerup', (e) => {
         if (state.currentScreen !== 'training-screen') return;
-        if (state.currentStep !== 9) return;
 
-        e.preventDefault();
+        // 68W: Step 9 — IO site assessment
+        if (state.selectedTask === '081-68W-0237' && state.currentStep === 9) {
+            e.preventDefault();
+            const pt = getCanvasPointFromEvent(e);
+            const center = getHumeralCenter();
+            const dist = distance({ x: pt.x, y: pt.y }, center);
+            if (dist <= CONFIG.HIT_TOLERANCE * 2) {
+                state.siteChecked = true;
+                showFeedback('✓ IO site assessed. No signs of infiltration noted.', 'success');
+                setTimeout(() => advanceStep(), 900);
+            } else {
+                showFeedback('Tap the IO insertion site to assess patency', 'error');
+                logError();
+                updateUI();
+            }
+            return;
+        }
 
-        const pt = getCanvasPointFromEvent(e);
-        const center = getHumeralCenter();
-        const dist = distance({ x: pt.x, y: pt.y }, center);
-
-        if (dist <= CONFIG.HIT_TOLERANCE * 2) {
-            state.siteChecked = true;
-            showFeedback('✓ IO site assessed. No signs of infiltration noted.', 'success');
-            setTimeout(() => advanceStep(), 900);
-        } else {
-            showFeedback('Tap the IO insertion site to assess patency', 'error');
-            state.errors++;
-            updateUI();
+        // 68Q: Click-based steps 6, 7, 9
+        if (state.selectedTask === '081-68Q-0034' && [6, 7, 9].includes(state.currentStep)) {
+            if (dragGuard.suppressNextClick) return;
+            e.preventDefault();
+            const pt = getCanvasPointFromEvent(e);
+            handlePharmacyClick(pt);
         }
     }, { passive: false });
 
@@ -2052,12 +3080,30 @@ document.addEventListener('DOMContentLoaded', () => {
         startSceneDrag(sceneItem, x, y, e.pointerId);
     }, { passive: false });
     
-    // Intro screen listener is bound above (startBtn)
-    
+    // Intro screen back button
+    const introBackBtn = document.getElementById('intro-back-btn');
+    if (introBackBtn) introBackBtn.addEventListener('click', () => showScreen('task-screen'));
+
+    // Mode selector toggle
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // Training screen quit button
+    const quitTrainingBtn = document.getElementById('quit-training-btn');
+    if (quitTrainingBtn) quitTrainingBtn.addEventListener('click', () => showScreen('intro-screen'));
+
     // Debrief screen
+    const debriefRestartBtn = document.getElementById('debrief-restart-btn');
+    if (debriefRestartBtn) debriefRestartBtn.addEventListener('click', () => showScreen('intro-screen'));
+
     document.getElementById('proceed-to-test-btn').addEventListener('click', initTest);
     
     // Test screen
+    document.getElementById('quit-test-btn').addEventListener('click', () => showScreen('debrief-screen'));
     document.getElementById('prev-question-btn').addEventListener('click', prevQuestion);
     document.getElementById('next-question-btn').addEventListener('click', nextQuestion);
     document.getElementById('submit-test-btn').addEventListener('click', submitTest);
@@ -2073,15 +3119,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('restart-from-congratulations-btn').addEventListener('click', () => {
         location.reload();
     });
+
+    const selectNewTaskBtn = document.getElementById('select-new-task-btn');
+    if (selectNewTaskBtn) selectNewTaskBtn.addEventListener('click', () => showScreen('mos-screen'));
     
     // Debug
     document.getElementById('show-hotspots').addEventListener('change', (e) => {
         state.showHotspots = e.target.checked;
-        renderScene();
-    });
-    
-    document.getElementById('show-needle-tip').addEventListener('change', (e) => {
-        state.showNeedleTip = e.target.checked;
         renderScene();
     });
     
@@ -2091,6 +3135,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Default selected task (proof of concept)
     setIntroTask('081-68W-0237', 'Place an Intraosseous Device');
+
+    // Site nav links
+    document.getElementById('nav-home-link').addEventListener('click', () => showScreen('welcome-screen'));
+    document.getElementById('nav-link-home').addEventListener('click', () => showScreen('welcome-screen'));
+    document.getElementById('nav-link-modules').addEventListener('click', () => showScreen('mos-screen'));
 
     // Debug panel toggle
     document.addEventListener('keydown', (e) => {

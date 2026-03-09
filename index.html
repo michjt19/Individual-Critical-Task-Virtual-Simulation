@@ -8,6 +8,20 @@
 </head>
 <body>
     <div id="app">
+        <nav class="site-nav" id="site-nav">
+            <div class="site-nav-inner">
+                <a class="site-nav-logo" id="nav-home-link">
+                    <span class="site-nav-star">★</span>
+                    <span class="site-nav-title">ICTSVS-001</span>
+                </a>
+                <div class="site-nav-links">
+                    <a class="site-nav-link" id="nav-link-home">HOME</a>
+                    <a class="site-nav-link" id="nav-link-modules">TRAINING MODULES</a>
+                </div>
+                <div class="site-nav-badge">UNCLASSIFIED</div>
+            </div>
+        </nav>
+
         <!-- Animated Background -->
         <div class="background-animation">
             <div class="grid-overlay"></div>
@@ -19,10 +33,12 @@
 <div id="welcome-screen" class="screen">
     <div class="intro-container">
         <div class="holographic-panel">
-            <div class="army-header" style="margin-bottom: 20px;">
-                <div class="army-star">★</div>
-                <h1 class="glitch" data-text="INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION">INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION</h1>
-                <div class="army-star">★</div>
+            <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+
+            <div class="sys-id-block">
+                <div class="sys-org">AMEDDC&amp;S | 68W Combat Medic Specialist</div>
+                <h1 class="sys-title">INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION</h1>
+                <div class="sys-designation">ICTSVS-001 &nbsp;|&nbsp; Version 1.0 &nbsp;|&nbsp; Training Use Only</div>
             </div>
 
             <div class="welcome-copy">
@@ -34,10 +50,39 @@
                 </p>
             </div>
 
+            <div class="capability-row">
+                <div class="cap-card">
+                    <div class="cap-icon">⚕</div>
+                    <div class="cap-title">DOCTRINE-ALIGNED</div>
+                    <div class="cap-desc">TCCC / PHTLS standards with publication-referenced conditions and safety gates</div>
+                </div>
+                <div class="cap-card">
+                    <div class="cap-icon">✓</div>
+                    <div class="cap-title">GO / NO-GO EVALUATION</div>
+                    <div class="cap-desc">Step-gated performance measurement with real-time error tracking and timed metrics</div>
+                </div>
+                <div class="cap-card">
+                    <div class="cap-icon">⊙</div>
+                    <div class="cap-title">OFFLINE READY</div>
+                    <div class="cap-desc">No server or installation required — open the HTML file and train anywhere</div>
+                </div>
+            </div>
+
+            <div class="official-notice">
+                <strong>NOTICE:</strong> This simulation is intended for use by students and instructors enrolled in
+                approved Army medical training programs. Actions performed in this environment are for
+                instructional purposes only and do not constitute actual medical guidance.
+            </div>
+
             <button id="go-mos-btn" class="military-btn primary" style="margin-top: 18px;">
                 <span class="btn-bg"></span>
                 <span class="btn-text">▶ SELECT MOS</span>
             </button>
+
+            <div class="authority-line">
+                United States Army Medical Center of Excellence (MEDCoE) &nbsp;·&nbsp;
+                Fort Sam Houston, TX &nbsp;·&nbsp; UNCLASSIFIED
+            </div>
         </div>
     </div>
 </div>
@@ -47,7 +92,7 @@
     <div class="intro-container">
         <div class="holographic-panel">
             <div class="panel-header">
-                <span class="icon">🧭</span>
+                <span class="icon">◈</span>
                 <span>SELECT MOS</span>
             </div>
 
@@ -68,7 +113,7 @@
     <div class="intro-container">
         <div class="holographic-panel">
             <div class="panel-header">
-                <span class="icon">📚</span>
+                <span class="icon">≋</span>
                 <span id="task-screen-title">TASK CATALOG</span>
             </div>
 
@@ -100,8 +145,8 @@
                         <span class="task-number" id="task-number-intro">081-68W-0237</span>
                     </div>
                     
-                    <div class="alert-box caution">
-                        <div class="alert-icon">⚠️</div>
+                    <div class="alert-box caution" id="intro-caution-box">
+                        <div class="alert-icon">△</div>
                         <div class="alert-content">
                             <strong>CAUTION:</strong> All body fluids should be considered potentially infectious. Always observe body substance isolation (BSI) precautions by wearing gloves and eye protection as a minimal standard of protection.
                         </div>
@@ -110,24 +155,24 @@
                     <div class="info-grid">
                         <div class="info-card">
                             <div class="card-header">
-                                <span class="icon">🎯</span>
+                                <span class="icon">◉</span>
                                 <h3>CONDITIONS</h3>
                             </div>
-                            <p>You are in an operational environment with a casualty requiring IO infusion. Equipment provided: IO driver, cartridge, alcohol prep pads, sterile syringe, NS flush, extension set, gauze, biohazard bag, and SF 600.</p>
+                            <p id="task-conditions-text">You are in an operational environment with a casualty requiring IO infusion. Equipment provided: IO driver, cartridge, alcohol prep pads, sterile syringe, NS flush, extension set, gauze, biohazard bag, and SF 600.</p>
                         </div>
                         
                         <div class="info-card">
                             <div class="card-header">
-                                <span class="icon">📋</span>
+                                <span class="icon">≡</span>
                                 <h3>STANDARDS</h3>
                             </div>
-                            <p>Place an IO device IAW PHTLS Prehospital Trauma Life Support and TCCC Guidelines while adhering to all warnings and cautions, without error.</p>
+                            <p id="task-standards-text">Place an IO device IAW PHTLS Prehospital Trauma Life Support and TCCC Guidelines while adhering to all warnings and cautions, without error.</p>
                         </div>
                     </div>
                     
                     <div class="objectives-section">
-                        <h3><span class="icon">🎓</span> LEARNING OBJECTIVES</h3>
-                        <div class="objectives-grid">
+                        <h3><span class="icon section-emoji">✦</span> LEARNING OBJECTIVES</h3>
+                        <div class="objectives-grid" id="objectives-grid">
                             <div class="objective">✓ Demonstrate proper BSI procedures</div>
                             <div class="objective">✓ Apply aseptic technique for site preparation</div>
                             <div class="objective">✓ Position driver at 90-degree angle</div>
@@ -140,15 +185,11 @@
                     </div>
                     
                     <div class="controls-section">
-                        <h3><span class="icon">🎮</span> SIMULATION CONTROLS</h3>
+                        <h3><span class="icon section-emoji">⌖</span> SIMULATION CONTROLS</h3>
                         <div class="controls-grid">
                             <div class="control-item">
                                 <span class="key">DRAG</span>
                                 <span>Move equipment to patient</span>
-                            </div>
-                            <div class="control-item">
-                                <span class="key">Q / E</span>
-                                <span>Rotate EZ-IO driver</span>
                             </div>
                             <div class="control-item">
                                 <span class="key">D</span>
@@ -157,14 +198,33 @@
                         </div>
                     </div>
                     
-                    <div class="scope-note">
-                        <strong>SCOPE:</strong> EZ-IO Humeral Insertion (Performance Measures 1-18). FAST1 sternal placement not included.
+                    <div class="scope-note" id="scope-note">
+                        <strong>SCOPE:</strong> <span id="scope-note-text">EZ-IO Humeral Insertion (Performance Measures 1-18). FAST1 sternal placement not included.</span>
                     </div>
-                    
-                    <button id="start-training-btn" class="military-btn primary">
-                        <span class="btn-bg"></span>
-                        <span class="btn-text">▶ BEGIN TRAINING SIMULATION</span>
-                    </button>
+
+                    <div class="mode-selector">
+                        <button class="mode-btn active" id="mode-instructional-btn" data-mode="instructional">
+                            <span class="mode-btn-icon">◉</span>
+                            <span class="mode-btn-label">INSTRUCTIONAL</span>
+                            <span class="mode-btn-desc">Step-by-step guidance — tools revealed per step</span>
+                        </button>
+                        <button class="mode-btn" id="mode-evaluation-btn" data-mode="evaluation">
+                            <span class="mode-btn-icon">◈</span>
+                            <span class="mode-btn-label">EVALUATION</span>
+                            <span class="mode-btn-desc">No guidance — all equipment present from the start</span>
+                        </button>
+                    </div>
+
+                    <div class="nav-row" style="justify-content: space-between;">
+                        <button id="intro-back-btn" class="military-btn secondary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ BACK</span>
+                        </button>
+                        <button id="start-training-btn" class="military-btn primary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">▶ BEGIN TRAINING SIMULATION</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -189,7 +249,7 @@
                     <div class="step-indicator">
                         <span class="step-current" id="current-step-display">1</span>
                         <span class="step-divider">/</span>
-                        <span class="step-total">10</span>
+                        <span class="step-total" id="step-total-display">10</span>
                     </div>
                 </div>
                 
@@ -202,6 +262,7 @@
                         <span class="errors-label">ERRORS</span>
                         <span class="errors-value">0</span>
                     </div>
+                    <button id="quit-training-btn" class="hud-quit-btn" title="Quit to task selection">✕ QUIT</button>
                 </div>
             </div>
 
@@ -234,7 +295,7 @@
                 <!-- Tools Panel -->
                 <div class="tools-panel">
                     <div class="panel-header">
-                        <span class="icon">🔧</span>
+                        <span class="icon">⚙</span>
                         <span>AVAILABLE EQUIPMENT</span>
                     </div>
                     <div id="tools-container" class="tools-grid"></div>
@@ -243,7 +304,7 @@
                 <!-- Progress Panel -->
                 <div class="progress-panel">
                     <div class="panel-header">
-                        <span class="icon">📊</span>
+                        <span class="icon">▣</span>
                         <span>TASK PROGRESS</span>
                     </div>
                     
@@ -302,9 +363,9 @@
         <div id="debrief-screen" class="screen hidden">
             <div class="debrief-container">
                 <div class="holographic-panel">
-                    <div class="success-banner">
-                        <div class="success-icon">✓</div>
-                        <h2>SIMULATION COMPLETE</h2>
+                    <div class="success-banner" id="debrief-banner">
+                        <div class="success-icon" id="debrief-result-icon">✓</div>
+                        <h2 id="debrief-result-title">SIMULATION COMPLETE</h2>
                     </div>
                     
                     <div class="stats-display">
@@ -322,28 +383,21 @@
                         </div>
                     </div>
                     
-                    <div class="objectives-achieved">
+                    <div id="debrief-error-breakdown" style="display:none;"></div>
+
+                    <div class="objectives-achieved" id="debrief-objectives">
                         <h3>LEARNING OBJECTIVES ACHIEVED</h3>
-                        <div class="objectives-list">
-                            <div class="objective-achieved">✅ Demonstrated proper BSI procedures</div>
-                            <div class="objective-achieved">✅ Applied aseptic technique for site preparation</div>
-                            <div class="objective-achieved">✅ Positioned EZ-IO driver at 90-degree angle</div>
-                            <div class="objective-achieved">✅ Attached extension set before syringe (safety)</div>
-                            <div class="objective-achieved">✅ Flushed catheter with appropriate saline volume</div>
-                            <div class="objective-achieved">✅ Secured catheter with dressing</div>
-                            <div class="objective-achieved">✅ Disposed of sharps properly without recapping</div>
-                            <div class="objective-achieved">✅ Documented procedure appropriately</div>
-                        </div>
+                        <div class="objectives-list" id="debrief-objectives-list"></div>
                     </div>
                     
                     <div class="task-summary-box">
                         <h3>INDIVIDUAL CRITICAL TASK SUMMARY</h3>
-                        <p><strong>Task 081-68W-0237: Place an Intraosseous Device</strong></p>
-                        <p>You have practiced essential steps for establishing intraosseous access using the EZ-IO system at the humeral insertion site. This skill is critical for providing vascular access when traditional IV access is difficult or impossible in tactical and emergency settings.</p>
-                        
+                        <p id="debrief-task-title"><strong>Task 081-68W-0237: Place an Intraosseous Device</strong></p>
+                        <p id="debrief-task-desc">You have practiced essential steps for establishing intraosseous access using the EZ-IO system at the humeral insertion site. This skill is critical for providing vascular access when traditional IV access is difficult or impossible in tactical and emergency settings.</p>
+
                         <div class="key-points">
                             <h4>KEY POINTS TO REMEMBER:</h4>
-                            <ul>
+                            <ul id="debrief-key-points-list">
                                 <li>Always observe BSI precautions</li>
                                 <li>Use aseptic technique throughout</li>
                                 <li>Position driver perpendicular (90°) to bone</li>
@@ -355,10 +409,16 @@
                         </div>
                     </div>
                     
-                    <button id="proceed-to-test-btn" class="military-btn primary">
-                        <span class="btn-bg"></span>
-                        <span class="btn-text">▶ PROCEED TO KNOWLEDGE ASSESSMENT</span>
-                    </button>
+                    <div class="nav-row" style="justify-content: space-between;">
+                        <button id="debrief-restart-btn" class="military-btn secondary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">↻ RESTART SIMULATION</span>
+                        </button>
+                        <button id="proceed-to-test-btn" class="military-btn primary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">▶ PROCEED TO KNOWLEDGE ASSESSMENT</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -368,6 +428,9 @@
             <div class="test-container">
                 <div class="holographic-panel">
                     <div class="test-header">
+                        <div class="test-context-bar">
+                            TASK <span id="test-task-number">081-68W-0237</span>
+                        </div>
                         <h2>KNOWLEDGE ASSESSMENT</h2>
                         <p class="test-subtitle">10 Questions | 100% Required to Pass</p>
                     </div>
@@ -384,6 +447,10 @@
                     </div>
                     
                     <div class="test-controls">
+                        <button id="quit-test-btn" class="military-btn secondary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">✕ QUIT ASSESSMENT</span>
+                        </button>
                         <button id="prev-question-btn" class="military-btn secondary" disabled>
                             <span class="btn-bg"></span>
                             <span class="btn-text">◀ PREVIOUS</span>
@@ -418,7 +485,7 @@
                     <div id="question-review" class="question-review"></div>
                     
                     <div id="remedial-section" class="remedial-notice hidden">
-                        <h3>⚠️ REMEDIAL TRAINING REQUIRED</h3>
+                        <h3>△ REMEDIAL TRAINING REQUIRED</h3>
                         <p>You will now review the steps related to your incorrect answers with additional guidance.</p>
                         <button id="start-remedial-btn" class="military-btn warning">
                             <span class="btn-bg"></span>
@@ -474,7 +541,7 @@
                     </div>
                     
                     <div class="achievement-badge">
-                        <div class="badge-icon">🎖️</div>
+                        <div class="badge-icon">★</div>
                         <h3 class="training-complete-title">TRAINING COMPLETE</h3>
                     </div>
                     
@@ -499,10 +566,16 @@
                         <p class="credit-instruction">Submit using Task Number: <strong class="highlight" id="task-number-highlight">081-68W-0237</strong></p>
                     </div>
                     
-                    <button id="restart-from-congratulations-btn" class="military-btn secondary">
-                        <span class="btn-bg"></span>
-                        <span class="btn-text">↻ RESTART TRAINING</span>
-                    </button>
+                    <div class="nav-row" style="justify-content: center; gap: 12px;">
+                        <button id="restart-from-congratulations-btn" class="military-btn secondary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">↻ RESTART TRAINING</span>
+                        </button>
+                        <button id="select-new-task-btn" class="military-btn primary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">▶ SELECT NEW TASK</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -514,12 +587,18 @@
                 <input type="checkbox" id="show-hotspots">
                 <span>Show Hotspots</span>
             </label>
-            <label class="debug-option">
-                <input type="checkbox" id="show-needle-tip">
-                <span>Show Needle Tip</span>
-            </label>
             <button id="skip-step-btn" class="debug-btn">Skip Step</button>
         </div>
+
+        <footer class="site-footer" id="site-footer">
+            <div class="site-footer-inner">
+                <div class="site-footer-class">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+                <div class="site-footer-attr">
+                    United States Army Medical Center of Excellence (MEDCoE) &nbsp;·&nbsp; Fort Sam Houston, TX
+                </div>
+                <div class="site-footer-meta">ICTSVS-001 &nbsp;·&nbsp; Version 1.0 &nbsp;·&nbsp; Training Use Only</div>
+            </div>
+        </footer>
     </div>
 
     <script src="script_v2.js"></script>
