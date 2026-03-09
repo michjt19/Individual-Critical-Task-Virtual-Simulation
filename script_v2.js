@@ -1947,6 +1947,7 @@ function startTraining() {
     state.errors = 0;
     state.stepsCompleted.clear();
     state.stepsWithErrors.clear();
+    clearSession();
 
     const activeMode = document.querySelector('.mode-btn.active');
     state.trainingMode = activeMode ? activeMode.dataset.mode : 'instructional';
@@ -1981,6 +1982,73 @@ function startTimer() {
 
 function stopTimer() {
     if (timerInterval) clearInterval(timerInterval);
+}
+
+// ===== TIMER PAUSE ON TAB SWITCH =====
+let timerPausedAt = null;
+document.addEventListener('visibilitychange', () => {
+    if (!state.startTime) return;
+    if (document.hidden) {
+        timerPausedAt = Date.now();
+    } else if (timerPausedAt !== null) {
+        const pauseDuration = Date.now() - timerPausedAt;
+        state.startTime += pauseDuration;
+        timerPausedAt = null;
+    }
+});
+
+// ===== SESSION PERSISTENCE (localStorage) =====
+const SESSION_KEY = 'ICTSVS_session';
+
+function saveSession() {
+    const elapsed = state.startTime ? Date.now() - state.startTime : 0;
+    const data = {
+        selectedMos: state.selectedMos,
+        selectedTask: state.selectedTask,
+        currentStep: state.currentStep,
+        errors: state.errors,
+        stepsCompleted: [...state.stepsCompleted],
+        stepsWithErrors: [...state.stepsWithErrors],
+        trainingMode: state.trainingMode,
+        elapsed,
+        version: 1
+    };
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(data)); } catch (e) {}
+}
+
+function clearSession() {
+    try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+}
+
+function getSavedSession() {
+    try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        // Only restore if version matches and task is still valid
+        if (parsed.version !== 1 || !parsed.selectedTask || !TASK_REGISTRY[parsed.selectedTask]) return null;
+        return parsed;
+    } catch (e) { return null; }
+}
+
+function resumeSession(session) {
+    state.selectedMos = session.selectedMos;
+    state.selectedTask = session.selectedTask;
+    state.currentStep = session.currentStep;
+    state.errors = session.errors;
+    state.stepsCompleted = new Set(session.stepsCompleted);
+    state.stepsWithErrors = new Set(session.stepsWithErrors);
+    state.trainingMode = session.trainingMode;
+    // Reconstruct startTime from saved elapsed so the timer continues correctly
+    state.startTime = Date.now() - session.elapsed;
+
+    loadTaskData(state.selectedTask);
+    showScreen('training-screen');
+    updateUI();
+    renderScene();
+    startTimer();
+    // Don't clear until first new step is completed — allows page-reload recovery
+    // clearSession() is called in advanceStep() after save
 }
 
 function shuffleArray(arr) {
@@ -2044,6 +2112,18 @@ function updateUI() {
     if (state.selectedTask === '081-68W-0237' && state.currentStep === 4) {
         setupStep4SharpsScene();
     }
+
+    // Keep canvas accessible label in sync with current step
+    if (canvas && STEPS[state.currentStep]) {
+        canvas.setAttribute('aria-label',
+            `Training scene: ${STEPS[state.currentStep].title}. ${STEPS[state.currentStep].instruction}`);
+    }
+
+    // Update screen-reader-only step description
+    const srDesc = document.getElementById('canvas-step-desc');
+    if (srDesc && STEPS[state.currentStep]) {
+        srDesc.textContent = STEPS[state.currentStep].instruction;
+    }
 }
 
 function updateToolsPanel() {
@@ -2104,21 +2184,22 @@ function showFeedback(message, type = 'info') {
 
 function advanceStep() {
     const currentStepInfo = STEPS[state.currentStep];
-    
+
     state.stepsCompleted.add(state.currentStep);
-    
+
     if (state.currentStep < state.totalSteps) {
         state.currentStep++;
-        
+
         const newStepInfo = STEPS[state.currentStep];
         if (newStepInfo.scene !== state.currentScene) {
             transitionScene(newStepInfo.scene);
         }
-        
+
         if (newStepInfo.autoAdvance) {
             setTimeout(() => advanceStep(), 1500);
         }
-        
+
+        saveSession();
         updateUI();
         renderScene();
     } else {
@@ -2139,6 +2220,7 @@ function transitionScene(newScene) {
 
 function completeSimulation() {
     stopTimer();
+    clearSession();
     const elapsedTime = Date.now() - state.startTime;
     const minutes = Math.floor(elapsedTime / 60000);
     const seconds = Math.floor((elapsedTime % 60000) / 1000);
@@ -2163,8 +2245,11 @@ function completeSimulation() {
         resultTitle.textContent = 'SIMULATION COMPLETE';
     }
 
-    // Hide proceed button and objectives in fail state
-    document.getElementById('proceed-to-test-btn').style.display = evalFailed ? 'none' : '';
+    // Hide proceed button and objectives in fail state or instructional mode
+    const showTestBtn = state.trainingMode === 'evaluation' && !evalFailed;
+    document.getElementById('proceed-to-test-btn').style.display = showTestBtn ? '' : 'none';
+    document.getElementById('proceed-to-eval-btn').style.display =
+        state.trainingMode === 'instructional' ? '' : 'none';
     document.getElementById('debrief-objectives').style.display = evalFailed ? 'none' : '';
 
     // Populate and show error breakdown in fail state
@@ -3101,6 +3186,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (debriefRestartBtn) debriefRestartBtn.addEventListener('click', () => showScreen('intro-screen'));
 
     document.getElementById('proceed-to-test-btn').addEventListener('click', initTest);
+
+    const proceedToEvalBtn = document.getElementById('proceed-to-eval-btn');
+    if (proceedToEvalBtn) proceedToEvalBtn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('mode-evaluation-btn').classList.add('active');
+        showScreen('intro-screen');
+    });
     
     // Test screen
     document.getElementById('quit-test-btn').addEventListener('click', () => showScreen('debrief-screen'));
@@ -3133,6 +3225,24 @@ document.addEventListener('DOMContentLoaded', () => {
         advanceStep();
     });
     
+    // Print buttons
+    const printDebriefBtn = document.getElementById('print-debrief-btn');
+    if (printDebriefBtn) printDebriefBtn.addEventListener('click', () => window.print());
+
+    const printCongratsBtn = document.getElementById('print-congrats-btn');
+    if (printCongratsBtn) printCongratsBtn.addEventListener('click', () => window.print());
+
+    // Resume saved session (if one exists)
+    const savedSession = getSavedSession();
+    const resumeBtn = document.getElementById('resume-session-btn');
+    if (resumeBtn && savedSession) {
+        const taskName = savedSession.selectedTask || 'previous session';
+        resumeBtn.querySelector('.btn-text').textContent =
+            `↩ RESUME: ${taskName} (Step ${savedSession.currentStep})`;
+        resumeBtn.classList.remove('hidden');
+        resumeBtn.addEventListener('click', () => resumeSession(savedSession));
+    }
+
     // Default selected task (proof of concept)
     setIntroTask('081-68W-0237', 'Place an Intraosseous Device');
 
@@ -3140,6 +3250,27 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('nav-home-link').addEventListener('click', () => showScreen('welcome-screen'));
     document.getElementById('nav-link-home').addEventListener('click', () => showScreen('welcome-screen'));
     document.getElementById('nav-link-modules').addEventListener('click', () => showScreen('mos-screen'));
+    document.getElementById('nav-link-about').addEventListener('click', () => showScreen('about-screen'));
+    document.getElementById('nav-link-reference').addEventListener('click', () => showScreen('reference-screen'));
+    document.getElementById('nav-link-resources').addEventListener('click', () => showScreen('resources-screen'));
+
+    // Resources hub → sub-pages
+    document.getElementById('resources-to-instructor-btn').addEventListener('click', () => showScreen('instructor-guide-screen'));
+    document.getElementById('resources-to-howto-btn').addEventListener('click', () => showScreen('how-to-use-screen'));
+    document.getElementById('resources-to-catalog-btn').addEventListener('click', () => showScreen('task-catalog-screen'));
+
+    // Footer links
+    document.getElementById('footer-link-changelog').addEventListener('click', () => showScreen('changelog-screen'));
+    document.getElementById('footer-link-privacy').addEventListener('click', () => showScreen('changelog-screen'));
+
+    // Back buttons on site pages
+    document.getElementById('about-back-btn').addEventListener('click', () => showScreen('welcome-screen'));
+    document.getElementById('reference-back-btn').addEventListener('click', () => showScreen('welcome-screen'));
+    document.getElementById('resources-back-btn').addEventListener('click', () => showScreen('welcome-screen'));
+    document.getElementById('instructor-guide-back-btn').addEventListener('click', () => showScreen('resources-screen'));
+    document.getElementById('how-to-use-back-btn').addEventListener('click', () => showScreen('resources-screen'));
+    document.getElementById('task-catalog-back-btn').addEventListener('click', () => showScreen('resources-screen'));
+    document.getElementById('changelog-back-btn').addEventListener('click', () => showScreen('welcome-screen'));
 
     // Debug panel toggle
     document.addEventListener('keydown', (e) => {

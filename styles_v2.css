@@ -439,9 +439,9 @@ body {
 }
 
 .military-btn.primary:hover .btn-bg {
-    background: #637028;
+    background: #748030;
     border-left-color: var(--army-gold-light);
-    box-shadow: 0 0 14px rgba(184, 150, 46, 0.35);
+    box-shadow: 0 0 16px rgba(184, 150, 46, 0.45);
 }
 
 .military-btn.secondary .btn-bg {
@@ -471,14 +471,15 @@ body {
 }
 
 .military-btn:hover .btn-bg {
-    background: #5c6628;
-    box-shadow: none;
+    background: #6a7430;
+    box-shadow: 0 0 10px rgba(184, 150, 46, 0.2);
     transform: none;
 }
 
 .military-btn.secondary:hover .btn-bg {
-    background: #3d4a33;
+    background: #506644;
     border-color: var(--army-gold);
+    box-shadow: 0 0 10px rgba(184, 150, 46, 0.25);
 }
 
 .military-btn:active {
@@ -2568,4 +2569,438 @@ body:not(.training-active) .screen:not(#training-screen) {
 
 @media (max-width: 600px) {
     .mode-selector { flex-direction: column; }
+}
+
+/* ===== ACCESSIBILITY UTILITIES ===== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Skip navigation link — visible only on keyboard focus */
+.skip-nav {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 9999;
+    padding: 8px 16px;
+    background: var(--army-gold);
+    color: var(--bg-primary);
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    border-radius: 0 0 4px 0;
+    transition: top 0.1s;
+}
+
+.skip-nav:focus {
+    top: 0;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    /* Hide chrome, navigation, interactive controls */
+    .site-nav,
+    .site-footer,
+    #debug-panel,
+    .background-animation,
+    .nav-row,
+    .hud-top,
+    .training-main,
+    .skip-nav {
+        display: none !important;
+    }
+
+    /* Hide all screens that are currently hidden (JS-toggled) */
+    .screen.hidden {
+        display: none !important;
+    }
+
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        font-family: serif;
+    }
+
+    .holographic-panel {
+        background: #fff !important;
+        border: 1px solid #333 !important;
+        box-shadow: none !important;
+        color: #000 !important;
+    }
+
+    .stat-card {
+        border: 1px solid #666 !important;
+        background: #f5f5f5 !important;
+    }
+
+    .stat-value,
+    .stat-label,
+    .success-icon,
+    #debrief-result-title,
+    h2, h3, h4, p, li {
+        color: #000 !important;
+    }
+
+    .success-banner {
+        background: #e8f5e9 !important;
+        border: 2px solid #2e7d32 !important;
+    }
+
+    .achievement-badge {
+        border: 2px solid #333 !important;
+        background: #fff !important;
+    }
+
+    .badge-icon {
+        color: #c9a83c !important;
+    }
+
+    .go-badge {
+        background: #2e7d32 !important;
+        color: #fff !important;
+    }
+}
+
+/* =============================
+   SITE PAGES (About / Reference / Resources / Changelog)
+   ============================= */
+
+/* Wider panel for reference/catalog tables */
+#reference-screen .holographic-panel,
+#task-catalog-screen .holographic-panel,
+#instructor-guide-screen .holographic-panel,
+#how-to-use-screen .holographic-panel,
+#changelog-screen .holographic-panel,
+#about-screen .holographic-panel,
+#resources-screen .holographic-panel {
+    max-width: 1000px;
+}
+
+/* Section blocks within site pages */
+.about-section {
+    margin-bottom: 28px;
+}
+
+.about-section p {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 10px;
+}
+
+.about-section-title {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--army-gold);
+    border-bottom: 1px solid var(--border-primary);
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+.about-note {
+    font-size: 11px !important;
+    color: var(--text-dim) !important;
+    font-style: italic;
+    margin-top: 8px !important;
+}
+
+/* Identity table on About screen */
+.about-id-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+}
+
+.about-id-table th,
+.about-id-table td {
+    padding: 7px 12px;
+    font-size: 12px;
+    border: 1px solid var(--border-primary);
+    text-align: left;
+}
+
+.about-id-table th {
+    background: rgba(75, 83, 32, 0.2);
+    color: var(--text-secondary);
+    font-weight: 600;
+    width: 200px;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+}
+
+.about-id-table td {
+    color: var(--text-primary);
+}
+
+/* Reference / catalog tables */
+.reference-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.reference-table th {
+    background: rgba(75, 83, 32, 0.35);
+    color: var(--army-gold-light);
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    text-align: left;
+}
+
+.reference-table td {
+    padding: 7px 12px;
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    vertical-align: top;
+    line-height: 1.5;
+}
+
+.reference-table tr:nth-child(even) td {
+    background: rgba(0,0,0,0.15);
+}
+
+/* Scope two-column layout */
+.scope-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 700px) {
+    .scope-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+.scope-col {
+    border: 1px solid var(--border-primary);
+    border-radius: 3px;
+    padding: 14px 16px;
+    background: var(--bg-secondary);
+}
+
+.scope-col-header {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.scope-included .scope-col-header {
+    color: var(--status-complete);
+}
+
+.scope-excluded .scope-col-header {
+    color: var(--danger-red);
+}
+
+.scope-col ul {
+    list-style: none;
+    padding: 0;
+}
+
+.scope-col ul li {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 3px 0;
+    line-height: 1.5;
+}
+
+.scope-col ul li::before {
+    content: '— ';
+    color: var(--text-dim);
+}
+
+.reference-disclaimer {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning-amber);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-top: 8px;
+}
+
+/* Resources hub grid (3 cards) */
+.resources-intro,
+.catalog-intro {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.resource-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+@media (max-width: 700px) {
+    .resource-hub-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.resource-hub-card {
+    cursor: pointer;
+    border: none;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+}
+
+.resource-hub-card:hover {
+    border-top-color: var(--army-gold);
+    background: var(--bg-panel);
+}
+
+/* Instructor/How-to lists */
+.instructor-list {
+    padding-left: 20px;
+    margin-bottom: 4px;
+}
+
+.instructor-list li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 3px 0;
+    line-height: 1.6;
+}
+
+.instructor-list li strong {
+    color: var(--text-primary);
+}
+
+.key-badge {
+    display: inline-block;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--army-gold-light);
+    vertical-align: middle;
+}
+
+/* Task catalog status badges */
+.catalog-status {
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.catalog-status.enabled {
+    background: var(--status-complete-bg);
+    color: var(--status-complete);
+    border: 1px solid var(--status-complete);
+}
+
+.catalog-status.coming-soon {
+    background: rgba(201,168,60,0.08);
+    color: var(--text-dim);
+    border: 1px solid var(--border-primary);
+}
+
+.catalog-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 12px;
+    margin-bottom: 20px;
+}
+
+/* Back navigation row */
+.back-nav {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-primary);
+}
+
+/* Footer links */
+.site-footer-links {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.footer-link {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.15s;
+}
+
+.footer-link:hover {
+    color: var(--text-secondary);
+}
+
+.footer-link-sep {
+    color: var(--text-dim);
+    font-size: 10px;
+    opacity: 0.5;
+}
+
+/* Print: show catalog table cleanly */
+@media print {
+    .catalog-panel {
+        max-width: none !important;
+    }
+    .back-nav,
+    .site-footer-links {
+        display: none !important;
+    }
+    .reference-table th {
+        background: #ccc !important;
+        color: #000 !important;
+    }
+    .reference-table td {
+        color: #000 !important;
+        border-color: #999 !important;
+    }
+    .catalog-status.enabled {
+        background: #d4edda !important;
+        color: #155724 !important;
+        border-color: #155724 !important;
+    }
+    .catalog-status.coming-soon {
+        color: #666 !important;
+        border-color: #999 !important;
+        background: #f5f5f5 !important;
+    }
 }

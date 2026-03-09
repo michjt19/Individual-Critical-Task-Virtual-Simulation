@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles_v2.css">
 </head>
 <body>
+    <a class="skip-nav" href="#main-content">Skip to main content</a>
     <div id="app">
         <nav class="site-nav" id="site-nav">
             <div class="site-nav-inner">
@@ -17,6 +18,9 @@
                 <div class="site-nav-links">
                     <a class="site-nav-link" id="nav-link-home">HOME</a>
                     <a class="site-nav-link" id="nav-link-modules">TRAINING MODULES</a>
+                    <a class="site-nav-link" id="nav-link-about">ABOUT</a>
+                    <a class="site-nav-link" id="nav-link-reference">REFERENCE</a>
+                    <a class="site-nav-link" id="nav-link-resources">RESOURCES</a>
                 </div>
                 <div class="site-nav-badge">UNCLASSIFIED</div>
             </div>
@@ -77,6 +81,10 @@
             <button id="go-mos-btn" class="military-btn primary" style="margin-top: 18px;">
                 <span class="btn-bg"></span>
                 <span class="btn-text">▶ SELECT MOS</span>
+            </button>
+            <button id="resume-session-btn" class="military-btn secondary hidden" style="margin-top: 10px;">
+                <span class="btn-bg"></span>
+                <span class="btn-text">↩ RESUME SAVED SESSION</span>
             </button>
 
             <div class="authority-line">
@@ -230,7 +238,7 @@
         </div>
 
         <!-- Training Screen -->
-        <div id="training-screen" class="screen hidden">
+        <div id="training-screen" class="screen hidden" id="main-content">
             <!-- Top HUD -->
             <div class="hud-top">
                 <div class="hud-left">
@@ -276,9 +284,10 @@
                         <div class="corner-decoration bl"></div>
                         <div class="corner-decoration br"></div>
                         
-                        <canvas id="scene-canvas"></canvas>
-                        
-                        <div id="feedback-message" class="feedback-overlay hidden"></div>
+                        <canvas id="scene-canvas" role="img" aria-label="Training simulation scene"></canvas>
+                        <p id="canvas-step-desc" class="sr-only"></p>
+
+                        <div id="feedback-message" class="feedback-overlay hidden" aria-live="assertive" aria-atomic="true"></div>
                     </div>
                     
                     <div class="instruction-display">
@@ -413,6 +422,14 @@
                         <button id="debrief-restart-btn" class="military-btn secondary">
                             <span class="btn-bg"></span>
                             <span class="btn-text">↻ RESTART SIMULATION</span>
+                        </button>
+                        <button id="print-debrief-btn" class="military-btn secondary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">⎙ PRINT RESULTS</span>
+                        </button>
+                        <button id="proceed-to-eval-btn" class="military-btn primary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">▶ PROCEED TO EVALUATION MODE</span>
                         </button>
                         <button id="proceed-to-test-btn" class="military-btn primary">
                             <span class="btn-bg"></span>
@@ -571,9 +588,558 @@
                             <span class="btn-bg"></span>
                             <span class="btn-text">↻ RESTART TRAINING</span>
                         </button>
+                        <button id="print-congrats-btn" class="military-btn secondary">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">⎙ PRINT CERTIFICATE</span>
+                        </button>
                         <button id="select-new-task-btn" class="military-btn primary">
                             <span class="btn-bg"></span>
                             <span class="btn-text">▶ SELECT NEW TASK</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             SITE PAGES — About / Reference / Resources / Changelog
+             ═══════════════════════════════════════════════ -->
+
+        <!-- About Screen -->
+        <div id="about-screen" class="screen hidden">
+            <div class="intro-container">
+                <div class="holographic-panel">
+                    <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+
+                    <div class="panel-header">
+                        <span class="icon">◈</span>
+                        <span>ABOUT THIS SYSTEM</span>
+                    </div>
+
+                    <div class="about-block">
+                        <table class="about-id-table">
+                            <tr><th>System Designation</th><td>ICTSVS-001</td></tr>
+                            <tr><th>Version</th><td>1.0 — 06 March 2025</td></tr>
+                            <tr><th>Proponent</th><td>U.S. Army Medical Center of Excellence (MEDCoE), AMEDDC&amp;S</td></tr>
+                            <tr><th>Location</th><td>Fort Sam Houston, TX 78234</td></tr>
+                            <tr><th>Classification</th><td>UNCLASSIFIED // For Official Training Use Only</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">PURPOSE</h3>
+                        <p>The Individual Critical Task Virtual Simulation (ICTSVS-001) is a web-based training aid designed to supplement hands-on skills training for Army Medical Department (AMEDD) personnel. It provides standards-referenced, step-gated performance simulation for selected Individual Critical Tasks as defined in current Soldier's Manuals and Trainer's Guides.</p>
+                        <p>This system is a <strong>training aid only</strong>. It is not a medical device, does not constitute medical advice or doctrine, and does not replace live skills training, evaluator certification, or official Army task performance records.</p>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">INTENDED USERS</h3>
+                        <p>Students and instructors enrolled in or supporting approved Army medical training programs at MEDCoE and subordinate schools. Additional MOS/AOC libraries will be released as validated content becomes available.</p>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">APPROVAL AUTHORITY</h3>
+                        <p>Content is proponent-reviewed and doctrine-aligned per publications listed on the REFERENCE screen. Specific approval authority and review chain documentation is on file with the developing office.</p>
+                        <p><em>Proponent Office: AMEDDC&amp;S / MEDCoE, Department of Combat Medic Training (DCMT) — placeholder until confirmed by program manager.</em></p>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">CREDITS &amp; ACKNOWLEDGMENTS</h3>
+                        <table class="reference-table">
+                            <thead>
+                                <tr><th>Role</th><th>Name / Organization</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Subject Matter Expert (68W)</td><td><em>[SME name — pending confirmation]</em></td></tr>
+                                <tr><td>Subject Matter Expert (68Q)</td><td><em>[SME name — pending confirmation]</em></td></tr>
+                                <tr><td>Doctrine Review</td><td>AMEDDC&amp;S Doctrine Division</td></tr>
+                                <tr><td>Technical Development</td><td>MEDCoE Distributed Learning Division</td></tr>
+                                <tr><td>Content Review</td><td><em>[Reviewer name(s) — pending confirmation]</em></td></tr>
+                            </tbody>
+                        </table>
+                        <p class="about-note">To update credits, provide names and roles to the point of contact listed on the CHANGELOG screen.</p>
+                    </div>
+
+                    <div class="back-nav">
+                        <button class="military-btn secondary back-btn" id="about-back-btn">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ HOME</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reference Screen -->
+        <div id="reference-screen" class="screen hidden">
+            <div class="intro-container">
+                <div class="holographic-panel">
+                    <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+
+                    <div class="panel-header">
+                        <span class="icon">≡</span>
+                        <span>REFERENCE</span>
+                    </div>
+
+                    <!-- Section A: Publications Cited -->
+                    <div class="about-section">
+                        <h3 class="about-section-title">SECTION A — PUBLICATIONS CITED</h3>
+                        <p>The following publications are referenced in the conditions, standards, performance measures, and evaluation criteria used in this simulation system.</p>
+                        <table class="reference-table">
+                            <thead>
+                                <tr><th>Publication Number</th><th>Title</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>STP 8-68W13-SM-TG</td>
+                                    <td>Soldier's Manual and Trainer's Guide, MOS 68W, Combat Medic Specialist, Skill Levels 1/2/3</td>
+                                    <td>06 March 2025</td>
+                                </tr>
+                                <tr>
+                                    <td>PHTLS (current edition)</td>
+                                    <td>Prehospital Trauma Life Support — Military Edition</td>
+                                    <td>Current</td>
+                                </tr>
+                                <tr>
+                                    <td>TCCC Guidelines</td>
+                                    <td>Tactical Combat Casualty Care Guidelines (CoTCCC)</td>
+                                    <td>Current</td>
+                                </tr>
+                                <tr>
+                                    <td>TC 4-02.01</td>
+                                    <td>First Responder (to the extent applicable to 68W tasks)</td>
+                                    <td>As current</td>
+                                </tr>
+                                <tr>
+                                    <td>STP 8-68Q14-SM-TG</td>
+                                    <td>Soldier's Manual and Trainer's Guide, MOS 68Q, Pharmacy Specialist</td>
+                                    <td>Current</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Section B: Scope and Limitations -->
+                    <div class="about-section">
+                        <h3 class="about-section-title">SECTION B — SCOPE AND LIMITATIONS</h3>
+
+                        <div class="scope-section">
+                            <div class="scope-col scope-included">
+                                <div class="scope-col-header">✓ SIMULATED IN THIS SYSTEM</div>
+                                <ul>
+                                    <li>EZ-IO humeral head insertion site (Task 081-68W-0237)</li>
+                                    <li>BSI (gloves and eye protection) as a mandatory first step</li>
+                                    <li>10-step sequential procedure with step-gated validation</li>
+                                    <li>Extension set attachment before syringe (safety gate)</li>
+                                    <li>Saline flush and site assessment steps</li>
+                                    <li>Sharps disposal (without recapping)</li>
+                                    <li>SF 600 documentation step</li>
+                                    <li>68Q controlled substance inventory (Task 081-68Q-0034)</li>
+                                    <li>Go/No-Go evaluation with error tracking and timed metrics</li>
+                                    <li>Knowledge assessment (10-question per-task quiz)</li>
+                                </ul>
+                            </div>
+                            <div class="scope-col scope-excluded">
+                                <div class="scope-col-header">✕ NOT SIMULATED</div>
+                                <ul>
+                                    <li>Haptic or tactile feedback (needle resistance, flush resistance)</li>
+                                    <li>FAST1 sternal IO insertion</li>
+                                    <li>Tibial and other alternate IO insertion sites</li>
+                                    <li>Sterile field setup and maintenance</li>
+                                    <li>Live patient assessment (actual pain, vital signs, responsiveness)</li>
+                                    <li>Medication administration via IO route</li>
+                                    <li>IO dwell time / removal procedures</li>
+                                    <li>Network transmission of training records (fully offline)</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="reference-disclaimer">
+                            <strong>DISCLAIMER:</strong> This simulation intentionally simplifies certain procedural elements to permit browser-based interaction without specialized hardware. It is not a substitute for live skills training, task qualification, or evaluator certification. Where simulation diverges from doctrine, the doctrinal standard governs. Students must perform tasks to standard on actual equipment before receiving official credit.
+                        </div>
+                    </div>
+
+                    <div class="back-nav">
+                        <button class="military-btn secondary back-btn" id="reference-back-btn">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ HOME</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources Hub Screen -->
+        <div id="resources-screen" class="screen hidden">
+            <div class="intro-container">
+                <div class="holographic-panel">
+                    <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+
+                    <div class="panel-header">
+                        <span class="icon">⊞</span>
+                        <span>RESOURCES</span>
+                    </div>
+
+                    <p class="resources-intro">Select a resource category below.</p>
+
+                    <div class="resource-hub-grid">
+                        <button class="cap-card resource-hub-card" id="resources-to-instructor-btn">
+                            <div class="cap-icon">◉</div>
+                            <div class="cap-title">INSTRUCTOR GUIDE</div>
+                            <div class="cap-desc">Training sequence, debrief questions, facilitation notes, and how to use debug mode</div>
+                        </button>
+                        <button class="cap-card resource-hub-card" id="resources-to-howto-btn">
+                            <div class="cap-icon">⌖</div>
+                            <div class="cap-title">HOW TO USE</div>
+                            <div class="cap-desc">System requirements, offline setup, file structure, controls, and troubleshooting</div>
+                        </button>
+                        <button class="cap-card resource-hub-card" id="resources-to-catalog-btn">
+                            <div class="cap-icon">≋</div>
+                            <div class="cap-title">TASK CATALOG</div>
+                            <div class="cap-desc">Full listing of available and upcoming tasks by MOS — printable reference page</div>
+                        </button>
+                    </div>
+
+                    <div class="back-nav">
+                        <button class="military-btn secondary back-btn" id="resources-back-btn">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ HOME</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructor Guide Screen -->
+        <div id="instructor-guide-screen" class="screen hidden">
+            <div class="intro-container">
+                <div class="holographic-panel">
+                    <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+
+                    <div class="panel-header">
+                        <span class="icon">◉</span>
+                        <span>INSTRUCTOR GUIDE</span>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">RECOMMENDED TRAINING SEQUENCE</h3>
+                        <table class="reference-table">
+                            <thead>
+                                <tr><th>Phase</th><th>Simulation Role</th><th>Purpose</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Pre-Exposure</td>
+                                    <td>Run sim <strong>before</strong> first hands-on repetition</td>
+                                    <td>Familiarize with sequence, equipment, and safety gates without manikin cost</td>
+                                </tr>
+                                <tr>
+                                    <td>Reinforcement</td>
+                                    <td>Run sim between hands-on reps</td>
+                                    <td>Immediate feedback on step order and common errors between live reps</td>
+                                </tr>
+                                <tr>
+                                    <td>Assessment Prep</td>
+                                    <td>Run sim <strong>after</strong> hands-on training</td>
+                                    <td>Self-assessment and knowledge check before GO/NO-GO evaluation</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">HOW TO INTERPRET RESULTS</h3>
+                        <ul class="instructor-list">
+                            <li><strong>Errors counter:</strong> Increments on each incorrect drop (wrong tool, wrong target, out-of-sequence). High errors with low time may indicate guessing.</li>
+                            <li><strong>Time:</strong> Displayed in MM:SS. No per-step time standard is enforced in simulation; use time holistically. Compare to doctrinal task time standards from the SM-TG.</li>
+                            <li><strong>Step completion:</strong> Each step is binary — completed or not. All 10 steps must complete for GO.</li>
+                            <li><strong>Knowledge assessment:</strong> 100% required. A score below 100% triggers mandatory remedial training before the learner can see their certificate.</li>
+                            <li><strong>Pass/Fail:</strong> Simulation GO does not constitute official task qualification. Use results to guide remediation and hands-on evaluation scheduling.</li>
+                        </ul>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">ACCESSING INSTRUCTOR / DEBUG MODE</h3>
+                        <p>Press the <kbd class="key-badge">D</kbd> key at any time during a training simulation to toggle the debug panel. The debug panel allows instructors to:</p>
+                        <ul class="instructor-list">
+                            <li>Show hotspot overlays on the scene canvas (visual indicator of valid drop zones)</li>
+                            <li>Skip the current step (useful for demonstrating later steps without completing prior steps)</li>
+                        </ul>
+                        <p>Debug mode is keyboard-only and not visible to learners unless the instructor activates it. It does not alter scoring.</p>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">SUGGESTED DEBRIEF QUESTIONS — Task 081-68W-0237 (IO Placement)</h3>
+                        <ul class="instructor-list">
+                            <li>What is the minimum BSI standard before beginning any invasive procedure?</li>
+                            <li>Why is the extension set attached <em>before</em> the syringe, not after?</li>
+                            <li>What angle should the IO driver be positioned at relative to the bone surface?</li>
+                            <li>How do you confirm correct IO placement before beginning infusion?</li>
+                            <li>What are the indicators of IO infiltration, and what action do you take?</li>
+                            <li>Why are needles never recapped, and what are the consequences of a needlestick?</li>
+                            <li>What information must be documented on the SF 600 after IO placement?</li>
+                        </ul>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">SUGGESTED DEBRIEF QUESTIONS — Task 081-68Q-0034 (Pharmacy Inventory)</h3>
+                        <ul class="instructor-list">
+                            <li>Who are the two required witnesses for controlled substance inventory?</li>
+                            <li>What constitutes a discrepancy, and what is the immediate reporting chain?</li>
+                            <li>What are the consequences of failing to report a shortage or overage?</li>
+                            <li>What documentation is required after each controlled substance inventory?</li>
+                        </ul>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">COMMON LEARNER ERRORS</h3>
+                        <ul class="instructor-list">
+                            <li>Attempting to attach syringe directly to IO hub (bypassing extension set)</li>
+                            <li>Skipping or delaying BSI step — BSI is a mandatory first action</li>
+                            <li>Incorrect drop zone — dragging to scene area rather than specific target</li>
+                            <li>Attempting to proceed out of sequence in instructional mode</li>
+                        </ul>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">PRINT INSTRUCTIONS</h3>
+                        <p>To print results for after-action review: complete a simulation, proceed to the debrief screen, and use the <strong>⎙ PRINT RESULTS</strong> button, or press <kbd class="key-badge">Ctrl+P</kbd>. The print stylesheet will suppress navigation and interactive elements.</p>
+                    </div>
+
+                    <div class="back-nav">
+                        <button class="military-btn secondary back-btn" id="instructor-guide-back-btn">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ RESOURCES</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How To Use Screen -->
+        <div id="how-to-use-screen" class="screen hidden">
+            <div class="intro-container">
+                <div class="holographic-panel">
+                    <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+
+                    <div class="panel-header">
+                        <span class="icon">⌖</span>
+                        <span>HOW TO USE THIS SYSTEM</span>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">SYSTEM REQUIREMENTS</h3>
+                        <table class="reference-table">
+                            <thead>
+                                <tr><th>Requirement</th><th>Recommended</th><th>Minimum</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Browser</td><td>Google Chrome or Microsoft Edge (latest)</td><td>Any modern browser with HTML5 support</td></tr>
+                                <tr><td>Screen Resolution</td><td>1280 × 720 or higher</td><td>1024 × 600</td></tr>
+                                <tr><td>Input Device</td><td>Mouse (drag-and-drop)</td><td>Touch screen (limited support — see below)</td></tr>
+                                <tr><td>Network</td><td>None required (fully offline)</td><td>None required</td></tr>
+                                <tr><td>Installation</td><td>None — open index.html directly</td><td>None</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">OFFLINE SETUP</h3>
+                        <ol class="instructor-list">
+                            <li>Download or copy the entire simulation folder to a local drive or USB drive.</li>
+                            <li>Keep all files in the same directory — do not move individual files out of the folder.</li>
+                            <li>Open <strong>index.html</strong> in Chrome or Edge. No web server or internet connection is required.</li>
+                            <li>If opening from a USB drive on a restricted network computer, ensure the browser is not blocking local file access (check browser security settings or use an instructor workstation).</li>
+                        </ol>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">FILE STRUCTURE</h3>
+                        <table class="reference-table">
+                            <thead>
+                                <tr><th>File</th><th>Purpose</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>index.html</td><td>Main application — open this file to launch the simulator</td></tr>
+                                <tr><td>script_v2.js</td><td>Application logic — do not modify</td></tr>
+                                <tr><td>styles_v2.css</td><td>Visual styles — do not modify</td></tr>
+                                <tr><td>*.png image files</td><td>Equipment and scene images — keep in same folder as index.html</td></tr>
+                                <tr><td>STP8_68W13_SM_TG.pdf</td><td>Reference publication (optional, not loaded by the app)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">CONTROLS SUMMARY</h3>
+                        <table class="reference-table">
+                            <thead>
+                                <tr><th>Control</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Mouse drag-and-drop</td><td>Move equipment from the tools panel to the simulation scene</td></tr>
+                                <tr><td><kbd class="key-badge">D</kbd> key</td><td>Toggle instructor debug panel (during active training only)</td></tr>
+                                <tr><td><kbd class="key-badge">Ctrl+P</kbd></td><td>Print current screen (use on debrief or task catalog)</td></tr>
+                                <tr><td>Back / Home buttons</td><td>Navigate between screens — browser back button is not supported</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">KNOWN BROWSER ISSUES</h3>
+                        <ul class="instructor-list">
+                            <li><strong>Safari (macOS/iOS):</strong> Drag-and-drop behavior may be inconsistent. Chrome or Edge recommended.</li>
+                            <li><strong>iOS / iPadOS:</strong> Touch drag-and-drop is not fully supported. Use a mouse-connected device for full simulation functionality.</li>
+                            <li><strong>Firefox:</strong> Navigation and screen routing work correctly. Drag-and-drop is functional but may feel slightly different from Chrome/Edge.</li>
+                            <li><strong>Zoomed-in browsers:</strong> If browser zoom is above 100%, drop zones may appear offset. Reset to 100% zoom (<kbd class="key-badge">Ctrl+0</kbd>) if drops are not registering.</li>
+                        </ul>
+                    </div>
+
+                    <div class="about-section">
+                        <h3 class="about-section-title">IF SOMETHING BREAKS</h3>
+                        <ol class="instructor-list">
+                            <li>Refresh the page (<kbd class="key-badge">F5</kbd> or <kbd class="key-badge">Ctrl+R</kbd>). This resets all state.</li>
+                            <li>If a saved session is causing issues, clear localStorage: open browser DevTools (<kbd class="key-badge">F12</kbd>) → Application tab → Local Storage → Clear All.</li>
+                            <li>If images are missing, verify all PNG files are in the same folder as index.html.</li>
+                            <li>If the issue persists, report it using the contact information on the CHANGELOG screen.</li>
+                        </ol>
+                    </div>
+
+                    <div class="back-nav">
+                        <button class="military-btn secondary back-btn" id="how-to-use-back-btn">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ RESOURCES</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Catalog Screen -->
+        <div id="task-catalog-screen" class="screen hidden">
+            <div class="intro-container">
+                <div class="holographic-panel catalog-panel">
+                    <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+
+                    <div class="panel-header">
+                        <span class="icon">≋</span>
+                        <span>TASK CATALOG — ALL MOS</span>
+                    </div>
+
+                    <p class="catalog-intro">All tasks listed below. ENABLED tasks are available for simulation. COMING SOON tasks are in development. This page is print-friendly (<kbd class="key-badge">Ctrl+P</kbd>).</p>
+
+                    <table class="reference-table catalog-table">
+                        <thead>
+                            <tr>
+                                <th>MOS</th>
+                                <th>Task Number</th>
+                                <th>Task Title</th>
+                                <th>Condition (Summary)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>68W</td>
+                                <td>081-68W-0237</td>
+                                <td>Place an Intraosseous Device</td>
+                                <td>Operational environment; casualty requiring IO infusion; EZ-IO equipment provided</td>
+                                <td><span class="catalog-status enabled">ENABLED</span></td>
+                            </tr>
+                            <tr>
+                                <td>68W</td>
+                                <td>081-68W-0230</td>
+                                <td>Place an Intermediate Airway Device</td>
+                                <td>Casualty with airway compromise; NPA/OPA equipment provided</td>
+                                <td><span class="catalog-status coming-soon">COMING SOON</span></td>
+                            </tr>
+                            <tr>
+                                <td>68W</td>
+                                <td>081-68W-0238</td>
+                                <td>Manage an Intraosseous Infusion</td>
+                                <td>IO access already established; fluids and tubing provided</td>
+                                <td><span class="catalog-status coming-soon">COMING SOON</span></td>
+                            </tr>
+                            <tr>
+                                <td>68Q</td>
+                                <td>081-68Q-0034</td>
+                                <td>Inventory Controlled Substances</td>
+                                <td>Pharmacy setting; controlled substance vault; two-witness requirement</td>
+                                <td><span class="catalog-status enabled">ENABLED</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="catalog-note">
+                        Additional tasks across 68-series MOS codes will be added as content is validated. See the ABOUT screen for proponent contact information.
+                    </div>
+
+                    <div class="back-nav">
+                        <button class="military-btn secondary back-btn" id="task-catalog-back-btn">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ RESOURCES</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Changelog / Privacy Screen -->
+        <div id="changelog-screen" class="screen hidden">
+            <div class="intro-container">
+                <div class="holographic-panel">
+                    <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
+
+                    <div class="panel-header">
+                        <span class="icon">▣</span>
+                        <span>CHANGELOG &amp; PRIVACY NOTICE</span>
+                    </div>
+
+                    <!-- Version Log -->
+                    <div class="about-section">
+                        <h3 class="about-section-title">VERSION LOG</h3>
+                        <table class="reference-table">
+                            <thead>
+                                <tr><th>Version</th><th>Date</th><th>Summary of Changes</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>v1.0</td>
+                                    <td>06 March 2025</td>
+                                    <td>Initial release. Tasks enabled: 081-68W-0237 (IO Placement, 68W) and 081-68Q-0034 (Controlled Substance Inventory, 68Q). Includes instructional mode, evaluation mode, knowledge assessment, remedial training, and session resume.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Privacy Notice -->
+                    <div class="about-section">
+                        <h3 class="about-section-title">PRIVACY &amp; DATA NOTICE</h3>
+                        <ul class="instructor-list">
+                            <li><strong>No data is transmitted.</strong> This application runs entirely offline in your browser. No information is sent to any server.</li>
+                            <li><strong>LocalStorage use:</strong> The application uses your browser's localStorage to save session progress (current task, current step). This data never leaves your device and is cleared when you clear your browser storage or use a private/incognito window.</li>
+                            <li><strong>No PII collected or stored.</strong> The application does not collect, process, or retain any personally identifiable information.</li>
+                            <li><strong>No cookies.</strong> No tracking cookies or analytics are used.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Feedback / Issue Reporting -->
+                    <div class="about-section">
+                        <h3 class="about-section-title">FEEDBACK &amp; ISSUE REPORTING</h3>
+                        <p>To report a bug, content error, or suggest an improvement, use the following contact:</p>
+                        <table class="reference-table">
+                            <tbody>
+                                <tr><th>Point of Contact</th><td><em>[Email address or GitHub issue URL — pending program manager confirmation]</em></td></tr>
+                                <tr><th>Reporting Format</th><td>Include: task number, step number, browser and version, and a brief description of the issue</td></tr>
+                                <tr><th>Example</th><td>"Task 081-68W-0237, Step 6 — extension set drop not registering in Firefox 124 on Windows 11"</td></tr>
+                            </tbody>
+                        </table>
+                        <p class="about-note">Until a confirmed point of contact is established, submit issues through your chain of command to the MEDCoE Distributed Learning Division.</p>
+                    </div>
+
+                    <div class="back-nav">
+                        <button class="military-btn secondary back-btn" id="changelog-back-btn">
+                            <span class="btn-bg"></span>
+                            <span class="btn-text">◀ HOME</span>
                         </button>
                     </div>
                 </div>
@@ -597,6 +1163,11 @@
                     United States Army Medical Center of Excellence (MEDCoE) &nbsp;·&nbsp; Fort Sam Houston, TX
                 </div>
                 <div class="site-footer-meta">ICTSVS-001 &nbsp;·&nbsp; Version 1.0 &nbsp;·&nbsp; Training Use Only</div>
+                <div class="site-footer-links">
+                    <a class="footer-link" id="footer-link-changelog">CHANGELOG</a>
+                    <span class="footer-link-sep">·</span>
+                    <a class="footer-link" id="footer-link-privacy">PRIVACY &amp; CONTACT</a>
+                </div>
             </div>
         </footer>
     </div>
