@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Individual Critical Task Virtual Simulation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;900&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles_v2.css">
 </head>
 <body>
@@ -13,7 +16,7 @@
             <div class="site-nav-inner">
                 <a class="site-nav-logo" id="nav-home-link">
                     <span class="site-nav-star">★</span>
-                    <span class="site-nav-title">ICTSVS-001</span>
+                    <span class="site-nav-title">ICT-VS</span>
                 </a>
                 <div class="site-nav-links">
                     <a class="site-nav-link" id="nav-link-home">HOME</a>
@@ -26,11 +29,8 @@
             </div>
         </nav>
 
-        <!-- Animated Background -->
-        <div class="background-animation">
-            <div class="grid-overlay"></div>
-            <canvas id="particle-canvas"></canvas>
-        </div>
+        <!-- Background -->
+        <div class="background-animation"></div>
 
         
 <!-- Welcome Screen -->
@@ -40,9 +40,8 @@
             <div class="classification-banner">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
 
             <div class="sys-id-block">
-                <div class="sys-org">AMEDDC&amp;S | 68W Combat Medic Specialist</div>
                 <h1 class="sys-title">INDIVIDUAL CRITICAL TASK VIRTUAL SIMULATION</h1>
-                <div class="sys-designation">ICTSVS-001 &nbsp;|&nbsp; Version 1.0 &nbsp;|&nbsp; Training Use Only</div>
+                <div class="sys-designation">ICT-VS &nbsp;|&nbsp; Version 1.0 &nbsp;|&nbsp; Training Use Only</div>
             </div>
 
             <div class="welcome-copy">
@@ -87,10 +86,6 @@
                 <span class="btn-text">↩ RESUME SAVED SESSION</span>
             </button>
 
-            <div class="authority-line">
-                United States Army Medical Center of Excellence (MEDCoE) &nbsp;·&nbsp;
-                Fort Sam Houston, TX &nbsp;·&nbsp; UNCLASSIFIED
-            </div>
         </div>
     </div>
 </div>
@@ -618,46 +613,21 @@
 
                     <div class="about-block">
                         <table class="about-id-table">
-                            <tr><th>System Designation</th><td>ICTSVS-001</td></tr>
+                            <tr><th>System Designation</th><td>ICT-VS</td></tr>
                             <tr><th>Version</th><td>1.0 — 06 March 2025</td></tr>
-                            <tr><th>Proponent</th><td>U.S. Army Medical Center of Excellence (MEDCoE), AMEDDC&amp;S</td></tr>
-                            <tr><th>Location</th><td>Fort Sam Houston, TX 78234</td></tr>
                             <tr><th>Classification</th><td>UNCLASSIFIED // For Official Training Use Only</td></tr>
                         </table>
                     </div>
 
                     <div class="about-section">
                         <h3 class="about-section-title">PURPOSE</h3>
-                        <p>The Individual Critical Task Virtual Simulation (ICTSVS-001) is a web-based training aid designed to supplement hands-on skills training for Army Medical Department (AMEDD) personnel. It provides standards-referenced, step-gated performance simulation for selected Individual Critical Tasks as defined in current Soldier's Manuals and Trainer's Guides.</p>
+                        <p>The Individual Critical Task Virtual Simulation (ICT-VS) is a web-based training aid designed to supplement hands-on skills training for Army Medical Department (AMEDD) personnel. It provides standards-referenced, step-gated performance simulation for selected Individual Critical Tasks as defined in current Soldier's Manuals and Trainer's Guides.</p>
                         <p>This system is a <strong>training aid only</strong>. It is not a medical device, does not constitute medical advice or doctrine, and does not replace live skills training, evaluator certification, or official Army task performance records.</p>
                     </div>
 
                     <div class="about-section">
                         <h3 class="about-section-title">INTENDED USERS</h3>
-                        <p>Students and instructors enrolled in or supporting approved Army medical training programs at MEDCoE and subordinate schools. Additional MOS/AOC libraries will be released as validated content becomes available.</p>
-                    </div>
-
-                    <div class="about-section">
-                        <h3 class="about-section-title">APPROVAL AUTHORITY</h3>
-                        <p>Content is proponent-reviewed and doctrine-aligned per publications listed on the REFERENCE screen. Specific approval authority and review chain documentation is on file with the developing office.</p>
-                        <p><em>Proponent Office: AMEDDC&amp;S / MEDCoE, Department of Combat Medic Training (DCMT) — placeholder until confirmed by program manager.</em></p>
-                    </div>
-
-                    <div class="about-section">
-                        <h3 class="about-section-title">CREDITS &amp; ACKNOWLEDGMENTS</h3>
-                        <table class="reference-table">
-                            <thead>
-                                <tr><th>Role</th><th>Name / Organization</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>Subject Matter Expert (68W)</td><td><em>[SME name — pending confirmation]</em></td></tr>
-                                <tr><td>Subject Matter Expert (68Q)</td><td><em>[SME name — pending confirmation]</em></td></tr>
-                                <tr><td>Doctrine Review</td><td>AMEDDC&amp;S Doctrine Division</td></tr>
-                                <tr><td>Technical Development</td><td>MEDCoE Distributed Learning Division</td></tr>
-                                <tr><td>Content Review</td><td><em>[Reviewer name(s) — pending confirmation]</em></td></tr>
-                            </tbody>
-                        </table>
-                        <p class="about-note">To update credits, provide names and roles to the point of contact listed on the CHANGELOG screen.</p>
+                        <p>Soldiers seeking to familiarize themselves with Individual Critical Tasks (ICTs) in a virtual environment as a supplement to hands-on, live skills training. This system supports self-directed preparation, task rehearsal, and standards review prior to graded performance evaluations.</p>
                     </div>
 
                     <div class="back-nav">
@@ -1133,7 +1103,7 @@
                                 <tr><th>Example</th><td>"Task 081-68W-0237, Step 6 — extension set drop not registering in Firefox 124 on Windows 11"</td></tr>
                             </tbody>
                         </table>
-                        <p class="about-note">Until a confirmed point of contact is established, submit issues through your chain of command to the MEDCoE Distributed Learning Division.</p>
+                        <p class="about-note">Until a confirmed point of contact is established, submit issues through your chain of command.</p>
                     </div>
 
                     <div class="back-nav">
@@ -1160,9 +1130,9 @@
             <div class="site-footer-inner">
                 <div class="site-footer-class">UNCLASSIFIED // FOR OFFICIAL TRAINING USE ONLY</div>
                 <div class="site-footer-attr">
-                    United States Army Medical Center of Excellence (MEDCoE) &nbsp;·&nbsp; Fort Sam Houston, TX
+                    Individual Critical Task Virtual Simulation
                 </div>
-                <div class="site-footer-meta">ICTSVS-001 &nbsp;·&nbsp; Version 1.0 &nbsp;·&nbsp; Training Use Only</div>
+                <div class="site-footer-meta">ICT-VS &nbsp;·&nbsp; Version 1.0 &nbsp;·&nbsp; Training Use Only</div>
                 <div class="site-footer-links">
                     <a class="footer-link" id="footer-link-changelog">CHANGELOG</a>
                     <span class="footer-link-sep">·</span>
